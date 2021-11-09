@@ -42,8 +42,10 @@ func (fc *FetchController) Key(key string) *FetchController {
 }
 
 func (fc *FetchController) genngql() (string, error) {
+	ids := strings.Join(fc.ids, ", ")
+
 	if len(fc.tags) == 0 {
-		return "", errors.New("tags length must greater than 0")
+		return fmt.Sprintf("FETCH PROP ON * %s", ids), nil
 	}
 
 	t := strings.Join(fc.tags, ", ")
@@ -52,7 +54,6 @@ func (fc *FetchController) genngql() (string, error) {
 		return "", errors.New("ids lenght must greater than 0")
 	}
 
-	ids := strings.Join(fc.ids, ", ")
 
 	if fc.key == "" {
 		return "", errors.New("empty tag key")
@@ -75,5 +76,10 @@ func (f *FetchController) Value() (*nebula.ResultSet, error) {
 
 func (f *FetchController) Find(model interface{}) error {
 	e := &entry{db: f.db, ctrl: f}
+
+	if len(f.tags) == 0 {
+		return e.finds(model)
+	}
+
 	return e.find(model)
 }

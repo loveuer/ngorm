@@ -96,7 +96,6 @@ func (db *NGDB) prepare() (sess *nebula.Session, err error) {
 
 
 var (
-	Debug bool
 	err   error
 	nglog = nebula.DefaultLogger{}
 )

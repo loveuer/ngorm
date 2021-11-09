@@ -43,7 +43,7 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 	}
 
 	e.session, err = e.db.prepare()
-	if err != nil && Debug {
+	if err != nil {
 		log.Errorf("get session err: %v", err)
 	}
 
@@ -251,14 +251,43 @@ func setRow2Map(row *nebula.Record, colNames []string) (map[string]interface{}, 
 			return mv, err
 		}
 
+		log.Debugf("col_name: %s", colNames)
+
 		switch {
+		case valWrapper.IsVertex():
+			node, _ := valWrapper.AsNode()
+			if vertexID, err := node.GetID().AsString(); err == nil {
+				mv["VertexID"] = vertexID
+			}
+			tags := node.GetTags()
+			for _, tag := range tags {
+				props, err := node.Properties(tag)
+				if err != nil {
+					log.Debugf("nebula get node props by tag err, tag: %s, err: %s", tag, err)
+					return mv, err
+				}
+
+				// props key -> val 全部拍扁到 tag 上
+				for _, pv := range props {
+					switch  {
+					case pv.IsString():
+						str, _ := pv.AsString()
+						var dst interface{}
+						if err = json.Unmarshal([]byte(str), &dst); err != nil {
+							mv[tag] = str
+						} else {
+							mv[tag] = dst
+						}
+					}
+				}
+			}
 		case valWrapper.IsString():
 			str, _ := valWrapper.AsString()
-			strs := make([]string, 0)
-			if err = json.Unmarshal([]byte(str), &strs); err != nil {
+			var dst interface{}
+			if err = json.Unmarshal([]byte(str), &dst); err != nil {
 				mv[colName] = str
 			} else {
-				mv[colName] = strs
+				mv[colName] = dst
 			}
 		case valWrapper.IsEmpty(), valWrapper.IsNull():
 			continue
@@ -291,11 +320,11 @@ func setCell2Map(cell *nebula.ValueWrapper) (map[string]interface{}, error) {
 				switch {
 				case propVal.IsString():
 					str, _ := propVal.AsString()
-					strs := make([]string, 0)
-					if err = json.Unmarshal([]byte(str), &strs); err != nil {
+					var dst interface{}
+					if err = json.Unmarshal([]byte(str), &dst); err != nil {
 						mv[tag] = str
 					} else {
-						mv[tag] = strs
+						mv[tag] = dst
 					}
 				case propVal.IsEmpty(), propVal.IsNull():
 					continue
@@ -390,7 +419,6 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 				log.Warnf("props not found by tag: %s", field)
 				continue
 			}
-
 
 			for _, propVal := range props {
 				switch {

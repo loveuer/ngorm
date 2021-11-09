@@ -10,14 +10,14 @@ import (
 
 type GoController struct {
 	db     *NGDB
-	from   string
+	from   []string
 	steps  []int
 	over   string
 	yields []string
 	err    error
 }
 
-func (db *NGDB) GOFrom(from string) *GoController {
+func (db *NGDB) GOFrom(from ...string) *GoController {
 	return &GoController{
 		db:   db,
 		from: from,
@@ -40,8 +40,8 @@ func (g *GoController) Yield(yield string) *GoController {
 }
 
 func (g *GoController) genngql() (ngql string, err error) {
-	if g.from == "" {
-		return ngql, errors.New("from is ''")
+	if len(g.from) == 0{
+		return ngql, errors.New("must specify from vertex")
 	}
 
 	if g.over == "" {
