@@ -18,9 +18,14 @@ type GoController struct {
 }
 
 func (db *NGDB) GOFrom(from ...string) *GoController {
+	var froms = make([]string, 0, len(from))
+	for _, f := range from {
+		froms = append(froms, fmt.Sprintf("'%s'", f))
+	}
+
 	return &GoController{
 		db:   db,
-		from: from,
+		from: froms,
 	}
 }
 
@@ -40,7 +45,7 @@ func (g *GoController) Yield(yield string) *GoController {
 }
 
 func (g *GoController) genngql() (ngql string, err error) {
-	if len(g.from) == 0{
+	if len(g.from) == 0 {
 		return ngql, errors.New("must specify from vertex")
 	}
 
@@ -70,7 +75,7 @@ func (g *GoController) genngql() (ngql string, err error) {
 		yieldPart = "YIELD " + strings.Join(g.yields, ", ")
 	}
 
-	ngql = fmt.Sprintf("GO %s FROM '%s' OVER %s %s", stepPart, g.from, g.over, yieldPart)
+	ngql = fmt.Sprintf("GO %s FROM %s OVER %s %s", stepPart, strings.Join(g.from, ", "), g.over, yieldPart)
 
 	return
 }

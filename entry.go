@@ -338,20 +338,27 @@ func setCell2Map(cell *nebula.ValueWrapper) (map[string]interface{}, error) {
 	return mv, nil
 }
 
+// 后面应该还要拆
 func setRow2Struct(row *nebula.Record, rvalue reflect.Value, mt modelType) error {
+	if rvalue.Type().Kind() == reflect.Ptr {
+		rvalue = rvalue.Elem()
+	}
+
+	if !rvalue.IsValid() || !rvalue.CanSet() {
+		return fmt.Errorf("invalid reflect value: %s", rvalue.Type().Kind().String())
+	}
+
+	if !mt.isStruct && rvalue.Type().Kind() == reflect.String {
+		rowStr := row.String()
+		rvalue.Set(reflect.ValueOf(rowStr))
+		return nil
+	}
+
 	for col, idx := range mt.fm {
 		valWrapper, err := row.GetValueByColName(col)
 		if err != nil {
 			log.Debugf("row get value by col name err, col_name: %s, err: %v", col, err)
 			return err
-		}
-
-		if rvalue.Type().Kind() == reflect.Ptr {
-			rvalue = rvalue.Elem()
-		}
-
-		if !rvalue.IsValid() || !rvalue.CanSet() {
-			return fmt.Errorf("invalid reflect value: %s", rvalue.Type().Kind().String())
 		}
 
 		switch {
