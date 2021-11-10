@@ -357,8 +357,8 @@ func setRow2Model(row *nebula.Record, rvalue reflect.Value, mt modelType) error 
 	for col, idx := range mt.fm {
 		valWrapper, err := row.GetValueByColName(col)
 		if err != nil {
-			log.Debugf("row get value by col name err, col_name: %s, err: %v", col, err)
-			return err
+			log.Warnf("nebula_row get value by col name err, col_name: %s, err: %v", col, err)
+			continue
 		}
 
 		switch {
