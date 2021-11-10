@@ -62,7 +62,7 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 func (e *entry) find(model interface{}) error {
 	var (
 		err       error
-		ok        bool
+		//ok        bool
 		resultSet *nebula.ResultSet
 		rowSize   int
 		colMap    = make(map[string]struct{})
