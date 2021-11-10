@@ -87,11 +87,11 @@ func (e *entry) find(model interface{}) error {
 	}
 
 	// 验证 model 的 field 是否都在返回值有对应
-	for key := range mt.fm {
-		if _, ok = colMap[key]; !ok {
-			return ErrorColumnNotFound(key)
-		}
-	}
+	//for key := range mt.fm {
+	//	if _, ok = colMap[key]; !ok {
+	//		return ErrorColumnNotFound(key)
+	//	}
+	//}
 
 	if !mt.isArray {
 		row, err := resultSet.GetRowValuesByIndex(0)
@@ -269,7 +269,7 @@ func setRow2Map(row *nebula.Record, colNames []string) (map[string]interface{}, 
 
 				// props key -> val 全部拍扁到 tag 上
 				for _, pv := range props {
-					switch  {
+					switch {
 					case pv.IsString():
 						str, _ := pv.AsString()
 						var dst interface{}
