@@ -39,8 +39,8 @@ func (g *GoController) Over(over string) *GoController {
 	return g
 }
 
-func (g *GoController) Yield(yield string) *GoController {
-	g.yields = append(g.yields, yield)
+func (g *GoController) Yield(yields ...string) *GoController {
+	g.yields = append(g.yields, yields...)
 	return g
 }
 
@@ -85,8 +85,8 @@ func (g *GoController) Value() (*nebula.ResultSet, error) {
 	return e.value()
 }
 
-func (g *GoController) Find(model interface{}) error {
+func (g *GoController) Finds(models ...interface{}) error {
 	e := &entry{db: g.db, ctrl: g}
 
-	return e.find(model)
+	return e.finds(models...)
 }

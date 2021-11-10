@@ -111,7 +111,7 @@ func (e *entry) find(model interface{}) error {
 			return nil
 		}
 
-		return setRow2Struct(row, mt.rvalue, mt) // mt is struct
+		return setRow2Model(row, mt.rvalue, mt) // mt is struct
 
 	} else { // model type is array|slice
 		if mt.isMap { // model type is []map[string]interface{}
@@ -147,7 +147,7 @@ func (e *entry) find(model interface{}) error {
 				}
 
 				newOne := reflect.New(mt.rtype)
-				if err = setRow2Struct(row, newOne, mt); err != nil {
+				if err = setRow2Model(row, newOne, mt); err != nil {
 					return err
 				}
 
@@ -339,7 +339,7 @@ func setCell2Map(cell *nebula.ValueWrapper) (map[string]interface{}, error) {
 }
 
 // 后面应该还要拆
-func setRow2Struct(row *nebula.Record, rvalue reflect.Value, mt modelType) error {
+func setRow2Model(row *nebula.Record, rvalue reflect.Value, mt modelType) error {
 	if rvalue.Type().Kind() == reflect.Ptr {
 		rvalue = rvalue.Elem()
 	}
