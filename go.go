@@ -54,7 +54,7 @@ func (g *GoController) genngql() (ngql string, err error) {
 	}
 
 	if len(g.steps) > 2 {
-		return ngql, errors.New("steps lenght only accept 0,1,2")
+		return ngql, errors.New("steps length only accept 0,1,2")
 	}
 
 	var (

@@ -51,7 +51,7 @@ func (fc *FetchController) genngql() (string, error) {
 	t := strings.Join(fc.tags, ", ")
 
 	if len(fc.ids) == 0 {
-		return "", errors.New("ids lenght must greater than 0")
+		return "", errors.New("ids length must greater than 0")
 	}
 
 
