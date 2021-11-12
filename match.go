@@ -6,7 +6,6 @@ import (
 
 type MatchController struct {
 	db      *NGDB
-	session *nebula.Session
 	tag     string
 	ngql    string
 	err     error
