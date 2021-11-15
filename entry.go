@@ -244,14 +244,16 @@ func (e *entry) finds(models ...interface{}) error {
 
 func setRow2Map(row *nebula.Record, colNames []string) (map[string]interface{}, error) {
 	mv := make(map[string]interface{})
+	log.Debug("columns:", colNames)
 	for _, colName := range colNames {
+		log.Debugf("getting column, name: %s", colName)
 		valWrapper, err := row.GetValueByColName(colName)
 		if err != nil {
 			log.Debugf("nebula get val by col_name err, col_name: %s, err: %v", colName, err)
 			return mv, err
 		}
 
-		log.Debugf("col_name: %s", colNames)
+		log.Debugf("col_name: %s, val_type: %s", colNames, valWrapper.GetType())
 
 		switch {
 		case valWrapper.IsVertex():
@@ -290,6 +292,8 @@ func setRow2Map(row *nebula.Record, colNames []string) (map[string]interface{}, 
 				mv[colName] = dst
 			}
 		case valWrapper.IsEmpty(), valWrapper.IsNull():
+			continue
+		case valWrapper.IsInt():
 			continue
 		default:
 			return mv, ErrorUnknownNebulaValueType(valWrapper.GetType())
