@@ -1,0 +1,14 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  test-github-actions:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'this is github actions'
+      - run: ls -alsh
+      - run: pwd
+      - run: whoami
