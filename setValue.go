@@ -11,7 +11,7 @@ func getFieldMapIdx(rtype reflect.Type) map[string]int {
 	m := make(map[string]int)
 	for index := 0; index < rtype.NumField(); index++ {
 		ftag := rtype.Field(index).Tag.Get("nebula")
-		if tag := strings.TrimSpace(ftag); tag != "" {
+		if tag := strings.TrimSpace(ftag); tag != "" && tag != "-" {
 			m[tag] = index
 		}
 	}
