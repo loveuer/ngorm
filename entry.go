@@ -61,7 +61,7 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 
 func (e *entry) find(model interface{}) error {
 	var (
-		err       error
+		err error
 		//ok        bool
 		resultSet *nebula.ResultSet
 		rowSize   int
@@ -280,6 +280,12 @@ func setRow2Map(row *nebula.Record, colNames []string) (map[string]interface{}, 
 						} else {
 							mv[tag] = dst
 						}
+					case pv.IsInt():
+						num, _ := pv.AsInt()
+						mv[tag] = num
+					case pv.IsFloat():
+						num, _ := pv.AsFloat()
+						mv[tag] = num
 					}
 				}
 			}
@@ -294,7 +300,11 @@ func setRow2Map(row *nebula.Record, colNames []string) (map[string]interface{}, 
 		case valWrapper.IsEmpty(), valWrapper.IsNull():
 			continue
 		case valWrapper.IsInt():
-			continue
+			num, _ := valWrapper.AsInt()
+			mv[colName] = num
+		case valWrapper.IsFloat():
+			num, _ := valWrapper.AsFloat()
+			mv[colName] = num
 		default:
 			return mv, ErrorUnknownNebulaValueType(valWrapper.GetType())
 		}
@@ -369,7 +379,13 @@ func setRow2Model(row *nebula.Record, rvalue reflect.Value, mt modelType) error 
 		case valWrapper.IsString():
 			str, _ := valWrapper.AsString()
 			ft := rvalue.Field(idx)
-			if err = setStr(str, ft); err != nil {
+			if err = setStrOrNum(str, ft); err != nil {
+				return err
+			}
+		case valWrapper.IsInt():
+			num, _ := valWrapper.AsInt()
+			ft := rvalue.Field(idx)
+			if err = setStrOrNum(num, ft); err != nil {
 				return err
 			}
 		case valWrapper.IsEmpty(), valWrapper.IsNull():
@@ -418,7 +434,7 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 					log.Warnf("get vertex id err: %v", err)
 				}
 
-				if err = setStr(vertexID, ft); err != nil {
+				if err = setStrOrNum(vertexID, ft); err != nil {
 					return err
 				}
 
@@ -435,7 +451,7 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 				switch {
 				case propVal.IsString():
 					str, _ := propVal.AsString()
-					if err = setStr(str, ft); err != nil {
+					if err = setStrOrNum(str, ft); err != nil {
 						return err
 					}
 				case propVal.IsEmpty(), propVal.IsNull():
@@ -453,7 +469,7 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 }
 
 // 针对我们采用了 json 序列化来存取 复杂数据结构的情况
-func setStr(val string, ft reflect.Value) error {
+func setStrOrNum(val interface{}, ft reflect.Value) error {
 
 	log.Infof("field type: %s", ft.Type().String())
 
@@ -572,9 +588,11 @@ func setStr(val string, ft reflect.Value) error {
 
 	default:
 		newOne := reflect.New(ft.Type())
-		if err := json.Unmarshal([]byte(val), newOne.Interface()); err != nil {
-			log.Debugf("unmashal nebula str val to field err, field type: %s, err: %v", ft.Type().String(), err)
-			return err
+		if str, err := cast.ToStringE(val); err == nil {
+			if err := json.Unmarshal([]byte(str), newOne.Interface()); err != nil {
+				log.Debugf("unmashal nebula str val to field err, field type: %s, err: %v", ft.Type().String(), err)
+				return err
+			}
 		}
 
 		ft.Set(newOne.Elem())
