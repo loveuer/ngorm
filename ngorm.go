@@ -137,6 +137,8 @@ func NewNGDB(space string, config ...Config) (*NGDB, error) {
 	defaultPoolConfig.MaxConnPoolSize = cfg.PoolSize
 	defaultPoolConfig.MinConnPoolSize = cfg.PoolSize
 	db.space = space
+	db.username = cfg.Username
+	db.password = cfg.Password
 
 	db.pool, err = nebula.NewConnectionPool(hostList, defaultPoolConfig, nglog)
 	if err != nil {
@@ -144,8 +146,6 @@ func NewNGDB(space string, config ...Config) (*NGDB, error) {
 	}
 
 	db.sessChan = make(chan *nebula.Session, cfg.PoolSize)
-	db.username = cfg.Username
-	db.password = cfg.Password
 
 	db.initSess(cfg.PoolSize)
 

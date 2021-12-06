@@ -340,6 +340,12 @@ func setCell2Map(cell *nebula.ValueWrapper) (map[string]interface{}, error) {
 					} else {
 						mv[tag] = dst
 					}
+				case propVal.IsInt():
+					num, _ := propVal.AsInt()
+					mv[tag] = num
+				case propVal.IsFloat():
+					num, _ := propVal.AsFloat()
+					mv[tag] = num
 				case propVal.IsEmpty(), propVal.IsNull():
 					continue
 				default:
@@ -416,7 +422,48 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 
 		rvalue.Set(reflect.ValueOf(str))
 		return nil
-
+	case cell.IsInt():
+		num, _ := cell.AsInt()
+		switch rvalue.Type().Kind() {
+		case reflect.Int:
+			var n int = int(num)
+			rvalue.Set(reflect.ValueOf(n))
+		case reflect.Int8:
+			var n int8 = int8(num)
+			rvalue.Set(reflect.ValueOf(n))
+		case reflect.Int16:
+			var n int16 = int16(num)
+			rvalue.Set(reflect.ValueOf(n))
+		case reflect.Int32:
+			var n int32 = int32(num)
+			rvalue.Set(reflect.ValueOf(n))
+		case reflect.Int64:
+			rvalue.Set(reflect.ValueOf(num))
+		case reflect.Uint:
+			var n uint = uint(num)
+			rvalue.Set(reflect.ValueOf(n))
+		case reflect.Uint8:
+			var n uint8 = uint8(num)
+			rvalue.Set(reflect.ValueOf(n))
+		case reflect.Uint16:
+			var n uint16 = uint16(num)
+			rvalue.Set(reflect.ValueOf(n))
+		case reflect.Uint32:
+			var n uint32 = uint32(num)
+			rvalue.Set(reflect.ValueOf(n))
+		case reflect.Uint64:
+			var n uint64 = uint64(num)
+			rvalue.Set(reflect.ValueOf(n))
+		}
+	case cell.IsFloat():
+		num, _ := cell.AsFloat()
+		switch rvalue.Type().Kind() {
+		case reflect.Float32:
+			var f float32 = float32(num)
+			rvalue.Set(reflect.ValueOf(f))
+		case reflect.Float64:
+			rvalue.Set(reflect.ValueOf(num))
+		}
 	case cell.IsVertex():
 		node, _ := cell.AsNode()
 		tags := node.GetTags()
@@ -452,6 +499,16 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 				case propVal.IsString():
 					str, _ := propVal.AsString()
 					if err = setStrOrNum(str, ft); err != nil {
+						return err
+					}
+				case propVal.IsInt():
+					num, _ := propVal.AsInt()
+					if err = setStrOrNum(num, ft); err != nil {
+						return err
+					}
+				case propVal.IsFloat():
+					num, _ := propVal.AsFloat()
+					if err = setStrOrNum(num, ft); err != nil {
 						return err
 					}
 				case propVal.IsEmpty(), propVal.IsNull():
