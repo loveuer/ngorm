@@ -30,7 +30,14 @@ func (db *NGDB) Fetch(ids ...string) *FetchController {
 }
 
 func (fc *FetchController) Tags(tags ...string) *FetchController {
-	fc.tags = tags
+	tmp := make([]string, 0)
+	for idx := range tags {
+		if strings.ToLower(tags[idx]) != "message_count" {
+			tmp = append(tmp, tags[idx])
+		}
+	}
+
+	fc.tags = tmp
 	return fc
 }
 
