@@ -1,10 +1,12 @@
 package ngorm
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
+
+	"github.com/goccy/go-json"
 
 	"github.com/spf13/cast"
 	nebula "github.com/vesoft-inc/nebula-go/v2"
@@ -415,6 +417,7 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 
 	switch {
 	case cell.IsString():
+		fmt.Println("is ssssssssssssssssssssssssssssssssssssssstr")
 		str, _ := cell.AsString()
 		if rvalue.Type().Kind() != reflect.String {
 			return fmt.Errorf("nebula data is string, but model is: %s", rvalue.Type().String())

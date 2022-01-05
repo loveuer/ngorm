@@ -18,7 +18,7 @@ const (
 )
 
 type logger struct {
-	sync.RWMutex
+	sync.Mutex
 	level                              LogLevel
 	dins, iins, wins, eins, fins, pins *baselog.Logger
 }
@@ -28,14 +28,14 @@ var (
 )
 
 func SetLogLevel(level LogLevel) {
-	log.RLock()
-	defer log.RUnlock()
+	log.Lock()
+	defer log.Unlock()
 	if level <= 5 {
 		log.level = level
 		return
 	}
 
-	log.level = InfoLevel
+	log.level = WarnLevel
 }
 
 func init() {
