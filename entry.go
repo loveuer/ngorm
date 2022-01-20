@@ -650,8 +650,6 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 			if err := json.Unmarshal([]byte(str), newOne.Interface()); err != nil {
 				log.Warnf("unmashal nebula str val to field err, field type: %s, err: %v", ft.Type().String(), err)
 			}
-
-			return nil
 		}
 
 		ft.Set(newOne.Elem())
