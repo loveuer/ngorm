@@ -24,7 +24,7 @@ func init() {
 
 func main() {
 	type Vertex struct {
-		ID      string   `nebula:"VertexID"`
+		ID      string   `nebula:"VertexID"` // Compatible vid
 		Name    []string `nebula:"Name"`
 		Address []string `nebula:"Address"`
 		Company []string `nebula:"Company"`
@@ -37,6 +37,8 @@ func main() {
 
 	//f := db.Fetch([]string{"Bbp6S7"}...)
 	f := db.Fetch([]string{"vertex-1", "vertex-2"}...)
+	f = f.Tags("*") // find all tags
+	f = f.Tags()    // left tags with empty to find tags in model
 	//err = f.Find(&vm)
 	//err = f.Find(vertex)
 	err = f.Find(&vertexs)

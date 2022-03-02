@@ -8,7 +8,7 @@ import (
 	"github.com/goccy/go-json"
 
 	"github.com/spf13/cast"
-	nebula "github.com/vesoft-inc/nebula-go/v2"
+	nebula "github.com/vesoft-inc/nebula-go/v3"
 )
 
 type controller interface {
@@ -18,6 +18,7 @@ type controller interface {
 type entry struct {
 	db      *NGDB
 	session *nebula.Session
+	ngql    string
 
 	ctrl controller
 }
@@ -25,7 +26,7 @@ type entry struct {
 func (e *entry) value() (*nebula.ResultSet, error) {
 	var (
 		set  *nebula.ResultSet
-		ngql string
+		ngql string = e.ngql
 		err  error
 	)
 
@@ -33,10 +34,12 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 		return set, errors.New("entry with nil db")
 	}
 
-	ngql, err = e.ctrl.genngql()
-	if err != nil {
-		log.Debugf("generate ngql err: %v", err)
-		return set, err
+	if ngql == "" && e.ctrl != nil {
+		ngql, err = e.ctrl.genngql()
+		if err != nil {
+			log.Debugf("generate ngql err: %v", err)
+			return set, err
+		}
 	}
 
 	if ngql == "" {

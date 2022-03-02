@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"strings"
 
-	nebula "github.com/vesoft-inc/nebula-go/v2"
+	nebula "github.com/vesoft-inc/nebula-go/v3"
 )
 
 func getFieldMapIdx(rtype reflect.Type) map[string]int {

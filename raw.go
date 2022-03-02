@@ -1,6 +1,6 @@
 package ngorm
 
-import nebula "github.com/vesoft-inc/nebula-go/v2"
+import nebula "github.com/vesoft-inc/nebula-go/v3"
 
 type RawController struct {
 	db   *NGDB

@@ -1,14 +1,14 @@
 package ngorm
 
 import (
-	nebula "github.com/vesoft-inc/nebula-go/v2"
+	nebula "github.com/vesoft-inc/nebula-go/v3"
 )
 
 type MatchController struct {
-	db      *NGDB
-	tag     string
-	ngql    string
-	err     error
+	db   *NGDB
+	tag  string
+	ngql string
+	err  error
 }
 
 func (db *NGDB) Match(ngql string) *MatchController {

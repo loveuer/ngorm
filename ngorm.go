@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	nebula "github.com/vesoft-inc/nebula-go/v2"
+	nebula "github.com/vesoft-inc/nebula-go/v3"
 )
 
 type Service struct {
@@ -93,7 +93,6 @@ func (db *NGDB) prepare() (sess *nebula.Session, err error) {
 
 	return sess, nil
 }
-
 
 var (
 	err   error

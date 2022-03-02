@@ -3,9 +3,8 @@ package ngorm
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
-
-	nebula "github.com/vesoft-inc/nebula-go/v2"
 )
 
 type FetchController struct {
@@ -40,7 +39,7 @@ func (fc *FetchController) Key(key string) *FetchController {
 	return fc
 }
 
-func (fc *FetchController) genngql() (string, error) {
+func (fc *FetchController) genngql(model interface{}) (string, error) {
 	if len(fc.ids) == 0 {
 		return "", errors.New("ids length must greater than 0")
 	}
@@ -51,8 +50,16 @@ func (fc *FetchController) genngql() (string, error) {
 		return "", errors.New("fetch tags must specify key")
 	}
 
+	if len(fc.tags) == 1 && fc.tags[0] == "*" {
+		return fmt.Sprintf("FETCH PROP ON * %s YIELD vertex AS v", ids), nil
+	}
+
 	if len(fc.tags) == 0 {
-		return fmt.Sprintf("FETCH PROP ON * %s", ids), nil
+		if fc.tags, err = fc.getTags(model); err != nil {
+			return "", err
+		}
+
+		log.Debugf("compatible get tags: %v", fc.tags)
 	}
 
 	t := strings.Join(fc.tags, ", ")
@@ -66,18 +73,68 @@ func (fc *FetchController) genngql() (string, error) {
 	}
 
 	f := strings.Join(fields, ", ")
-	return fmt.Sprintf("fetch PROP on %s %s yield %s", t, ids, f), nil
+	return fmt.Sprintf("fetch PROP on %s %s yield id(vertex) as VertexID, %s", t, ids, f), nil
 }
 
-func (f *FetchController) Value() (*nebula.ResultSet, error) {
-	e := &entry{db: f.db, ctrl: f}
-	return e.value()
+func (fc *FetchController) getTags(model interface{}) ([]string, error) {
+	var (
+		ok      bool
+		tags    = make([]string, 0)
+		rt      reflect.Type
+		exclude = map[string]struct{}{
+			"VertexID": {},
+		}
+	)
+
+	rv := reflect.ValueOf(model)
+
+	if rv.Type().Kind() != reflect.Ptr {
+		log.Debugf("model type not ptr, but: %s", rv.Type().String())
+		return tags, ErrorModelNotPtr
+	}
+
+	rv = rv.Elem()
+
+	if !rv.IsValid() {
+		return tags, ErrorInvalidModel
+	}
+
+	if rv.Type().Kind() == reflect.Slice || rv.Type().Kind() == reflect.Array {
+		rt = rv.Type().Elem()
+	} else {
+		rt = rv.Type()
+	}
+
+	for index := 0; index < rt.NumField(); index++ {
+		ftag := rt.Field(index).Tag.Get("nebula")
+		fmt.Printf("tag: %s\n", ftag)
+		if tag := strings.TrimSpace(ftag); tag != "" && tag != "-" {
+			if _, ok = exclude[tag]; !ok {
+				tags = append(tags, tag)
+			}
+		}
+	}
+
+	return tags, nil
 }
 
-func (f *FetchController) Find(model interface{}) error {
-	e := &entry{db: f.db, ctrl: f}
+func (fc *FetchController) Find(model interface{}) error {
+	var (
+		err error
+		e   = &entry{db: fc.db}
+	)
 
-	if len(f.tags) == 0 {
+	if fc.ngql, err = fc.genngql(model); err != nil {
+		return err
+	}
+
+	if fc.ngql == "" {
+		return errors.New("empty ngql")
+	}
+
+	e.ngql = fc.ngql
+
+	if len(fc.tags) == 1 && fc.tags[0] == "*" {
 		return e.finds(model)
 	}
 
