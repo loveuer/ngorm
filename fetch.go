@@ -89,7 +89,7 @@ func (fc *FetchController) getTags(model interface{}) ([]string, error) {
 	rv := reflect.ValueOf(model)
 
 	if rv.Type().Kind() != reflect.Ptr {
-		log.Debugf("model type not ptr, but: %s", rv.Type().String())
+		log.Errorf("model type not ptr, but: %s", rv.Type().String())
 		return tags, ErrorModelNotPtr
 	}
 

@@ -37,7 +37,7 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 	if ngql == "" && e.ctrl != nil {
 		ngql, err = e.ctrl.genngql()
 		if err != nil {
-			log.Debugf("generate ngql err: %v", err)
+			log.Errorf("generate ngql err: %v", err)
 			return set, err
 		}
 	}
@@ -57,7 +57,7 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 
 	set, err = e.session.Execute(ngql)
 	if err != nil {
-		log.Debug("session execute err:", err)
+		log.Errorf("session execute err:", err)
 	}
 
 	return set, err
@@ -100,7 +100,7 @@ func (e *entry) find(model interface{}) error {
 	if !mt.isArray {
 		row, err := resultSet.GetRowValuesByIndex(0)
 		if err != nil {
-			log.Debugf("nebula get row value by index err, index: 0, err: %v", err)
+			log.Errorf("nebula get row value by index err, index: 0, err: %v", err)
 			return err
 		}
 
@@ -117,14 +117,14 @@ func (e *entry) find(model interface{}) error {
 
 		return setRow2Model(row, mt.rvalue, mt) // mt is struct
 
-	} else { // model type is array|slice
+	} else {          // model type is array|slice
 		if mt.isMap { // model type is []map[string]interface{}
 			result := make([]map[string]interface{}, 0)
 
 			for rowIdx := 0; rowIdx < rowSize; rowIdx++ {
 				row, err := resultSet.GetRowValuesByIndex(rowIdx)
 				if err != nil {
-					log.Debugf("nebula get row value by index err, index: %d, err: %v", rowIdx, err)
+					log.Errorf("nebula get row value by index err, index: %d, err: %v", rowIdx, err)
 					return err
 				}
 
@@ -146,7 +146,7 @@ func (e *entry) find(model interface{}) error {
 			for rowIdx := 0; rowIdx < rowSize; rowIdx++ {
 				row, err := resultSet.GetRowValuesByIndex(rowIdx)
 				if err != nil {
-					log.Debugf("nebula get row value by index err, index: %d, err: %v", rowIdx, err)
+					log.Errorf("nebula get row value by index err, index: %d, err: %v", rowIdx, err)
 					return err
 				}
 
@@ -196,7 +196,7 @@ func (e *entry) finds(models ...interface{}) error {
 
 		colVal, err := resultSet.GetValuesByColName(colName)
 		if err != nil {
-			log.Debugf("nebula get column value by col_name err, col_name: %s, err: %v", colName, err)
+			log.Errorf("nebula get column value by col_name err, col_name: %s, err: %v", colName, err)
 			return err
 		}
 
@@ -214,7 +214,7 @@ func (e *entry) finds(models ...interface{}) error {
 					return err
 				}
 			}
-		} else { // mt is array || slice
+		} else {          // mt is array || slice
 			if mt.isMap { // mt is []map
 				mvs := make([]map[string]interface{}, 0)
 				for _, colRow := range colVal {
@@ -253,7 +253,7 @@ func setRow2Map(row *nebula.Record, colNames []string) (map[string]interface{}, 
 		log.Debugf("getting column, name: %s", colName)
 		valWrapper, err := row.GetValueByColName(colName)
 		if err != nil {
-			log.Debugf("nebula get val by col_name err, col_name: %s, err: %v", colName, err)
+			log.Errorf("nebula get val by col_name err, col_name: %s, err: %v", colName, err)
 			return mv, err
 		}
 
@@ -269,7 +269,7 @@ func setRow2Map(row *nebula.Record, colNames []string) (map[string]interface{}, 
 			for _, tag := range tags {
 				props, err := node.Properties(tag)
 				if err != nil {
-					log.Debugf("nebula get node props by tag err, tag: %s, err: %s", tag, err)
+					log.Errorf("nebula get node props by tag err, tag: %s, err: %s", tag, err)
 					return mv, err
 				}
 
@@ -542,7 +542,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Int:
 		vint, err := cast.ToIntE(val)
 		if err != nil {
-			log.Debugf("nebula val to int err: %v", err)
+			log.Errorf("nebula val to int err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vint))
@@ -551,7 +551,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Int8:
 		vint8, err := cast.ToInt8E(val)
 		if err != nil {
-			log.Debugf("nebula val to int8 err: %v", err)
+			log.Errorf("nebula val to int8 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vint8))
@@ -560,7 +560,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Int16:
 		vint16, err := cast.ToInt16E(val)
 		if err != nil {
-			log.Debugf("nebula val to int16 err: %v", err)
+			log.Errorf("nebula val to int16 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vint16))
@@ -569,7 +569,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Int32:
 		vint32, err := cast.ToInt32E(val)
 		if err != nil {
-			log.Debugf("nebula val to int32 err: %v", err)
+			log.Errorf("nebula val to int32 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vint32))
@@ -578,7 +578,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Int64:
 		vint64, err := cast.ToInt64E(val)
 		if err != nil {
-			log.Debugf("nebula val to int64 err: %v", err)
+			log.Errorf("nebula val to int64 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vint64))
@@ -587,7 +587,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Uint:
 		vuint, err := cast.ToUintE(val)
 		if err != nil {
-			log.Debugf("nebula val to uint err: %v", err)
+			log.Errorf("nebula val to uint err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vuint))
@@ -596,7 +596,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Uint8:
 		vuint8, err := cast.ToUint8E(val)
 		if err != nil {
-			log.Debugf("nebula val to uint8 err: %v", err)
+			log.Errorf("nebula val to uint8 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vuint8))
@@ -605,7 +605,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Uint16:
 		vuint16, err := cast.ToUint16E(val)
 		if err != nil {
-			log.Debugf("nebula val to uint16 err: %v", err)
+			log.Errorf("nebula val to uint16 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vuint16))
@@ -614,7 +614,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Uint32:
 		vuint32, err := cast.ToUint32E(val)
 		if err != nil {
-			log.Debugf("nebula val to uint32 err: %v", err)
+			log.Errorf("nebula val to uint32 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vuint32))
@@ -623,7 +623,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Uint64:
 		vuint64, err := cast.ToUint64E(val)
 		if err != nil {
-			log.Debugf("nebula val to uint64 err: %v", err)
+			log.Errorf("nebula val to uint64 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vuint64))
@@ -632,7 +632,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Float32:
 		vf32, err := cast.ToFloat32E(val)
 		if err != nil {
-			log.Debugf("nebula val to float32 err: %v", err)
+			log.Errorf("nebula val to float32 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vf32))
@@ -641,7 +641,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Float64:
 		vf64, err := cast.ToFloat64E(val)
 		if err != nil {
-			log.Debugf("nebula val to float64 err: %v", err)
+			log.Errorf("nebula val to float64 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vf64))
