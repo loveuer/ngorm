@@ -84,6 +84,8 @@ func (pe *PathController) genngql() (ngql string, err error) {
 		ngql = fmt.Sprintf("%s UPTO %d STEPS", ngql, pe.upto)
 	}
 
+	ngql += " YIELD path as p"
+
 	return
 }
 

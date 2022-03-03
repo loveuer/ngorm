@@ -57,7 +57,7 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 
 	set, err = e.session.Execute(ngql)
 	if err != nil {
-		log.Errorf("session execute err:", err)
+		log.Errorf("session execute err: %v", err)
 	}
 
 	return set, err
