@@ -141,7 +141,8 @@ func NewNGDB(space string, config ...Config) (*NGDB, error) {
 
 	db.pool, err = nebula.NewConnectionPool(hostList, defaultPoolConfig, nglog)
 	if err != nil {
-		log.Fatalf("can't constructs new connection pool, err: %v", err)
+		log.Errorf("can't constructs new connection pool, err: %v", err)
+		return db, err
 	}
 
 	db.sessChan = make(chan *nebula.Session, cfg.PoolSize)
