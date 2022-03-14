@@ -532,7 +532,7 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 // 针对我们采用了 json 序列化来存取 复杂数据结构的情况
 func setStrOrNum(val interface{}, ft reflect.Value) error {
 
-	log.Infof("field type: %s", ft.Type().String())
+	log.Debugf("field type: %s", ft.Type().String())
 
 	switch ft.Type().Kind() {
 	case reflect.String:

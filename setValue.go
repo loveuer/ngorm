@@ -13,6 +13,7 @@ func getFieldMapIdx(rtype reflect.Type) map[string]int {
 		ftag := rtype.Field(index).Tag.Get("nebula")
 		if tag := strings.TrimSpace(ftag); tag != "" && tag != "-" {
 			m[tag] = index
+			log.Infof("nebula tag: [tag: %s] [model: %s]", tag, rtype.Kind().String())
 		}
 	}
 
