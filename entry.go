@@ -117,7 +117,7 @@ func (e *entry) find(model interface{}) error {
 
 		return setRow2Model(row, mt.rvalue, mt) // mt is struct
 
-	} else {          // model type is array|slice
+	} else { // model type is array|slice
 		if mt.isMap { // model type is []map[string]interface{}
 			result := make([]map[string]interface{}, 0)
 
@@ -214,7 +214,7 @@ func (e *entry) finds(models ...interface{}) error {
 					return err
 				}
 			}
-		} else {          // mt is array || slice
+		} else { // mt is array || slice
 			if mt.isMap { // mt is []map
 				mvs := make([]map[string]interface{}, 0)
 				for _, colRow := range colVal {

@@ -144,8 +144,8 @@ func (fc *FetchController) Find(model interface{}) error {
 type FetchPathController struct {
 	db    *NGDB
 	edge  string
-	props []string
 	paths []string
+	key   string
 	ngql  string
 	err   error
 }
@@ -157,8 +157,8 @@ func (db *NGDB) FetchPath(edge string) *FetchPathController {
 	}
 }
 
-func (fp *FetchPathController) Props(props ...string) *FetchPathController {
-	fp.props = props
+func (fp *FetchPathController) Key(key string) *FetchPathController {
+	fp.key = key
 	return fp
 }
 
@@ -176,23 +176,13 @@ func (fp *FetchPathController) genngql() (string, error) {
 		return "", errors.New("length of paths can't be 0")
 	}
 
-	if len(fp.props) == 0 {
-		return "", errors.New("length of props can't be 0")
-	}
-
-	if fp.props[0] == "" {
-		return "", errors.New("props can't be ''")
+	if fp.key == "" {
+		return "", errors.New("key can't be ''")
 	}
 
 	p := strings.Join(fp.paths, ", ")
 
-	for idx := range fp.props {
-		fp.props[idx] = fmt.Sprintf("%s.%s as %s", fp.edge, fp.props[idx], fp.props[idx])
-	}
-
-	y := strings.Join(fp.props, ", ")
-
-	return fmt.Sprintf("FETCH PROP ON %s %s YIELD %s", fp.edge, p, y), nil
+	return fmt.Sprintf("FETCH PROP ON %s %s YIELD %s.%s as v", fp.edge, p, fp.edge, fp.key), nil
 }
 
 func (fp *FetchPathController) Find(model interface{}) error {
