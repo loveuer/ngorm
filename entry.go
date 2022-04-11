@@ -51,7 +51,7 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 		log.Errorf("get session err: %v", err)
 	}
 
-	defer e.db.release(e.session)
+	//defer e.db.release(e.session)
 
 	log.Infof("ngql: %s", ngql)
 

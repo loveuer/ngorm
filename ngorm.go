@@ -1,6 +1,7 @@
 package ngorm
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
@@ -14,6 +15,7 @@ type Service struct {
 }
 
 type Config struct {
+	Ctx      context.Context
 	Servers  []Service
 	Username string
 	Password string
@@ -23,6 +25,8 @@ type Config struct {
 
 type NGDB struct {
 	sync.Mutex
+	ctx      context.Context
+	cancel   context.CancelFunc
 	space    string
 	pool     *nebula.ConnectionPool
 	username string
@@ -43,36 +47,50 @@ func (db *NGDB) getSession(duration ...time.Duration) (*nebula.Session, error) {
 	return <-db.sessChan, nil
 }
 
+// Deprecated
 func (db *NGDB) release(session *nebula.Session) {
 	session.Release()
+}
+
+func (db *NGDB) initSess(size int) {
+	sessionsPool := make([]*nebula.Session, 0, size)
+	for idx := 0; idx < size; idx++ {
+		if sess, err := db.newSession(); err == nil {
+			sessionsPool = append(sessionsPool, sess)
+		}
+	}
+
+	if len(sessionsPool) == 0 {
+		log.Panic("session pool length == 0")
+	}
+
+	log.Infof("inited [%d] nebula sessions", len(sessionsPool))
+
 	go func() {
 		for {
-			if db.newSession(true) {
-				break
+			select {
+			case <-db.ctx.Done():
+				for idx := range sessionsPool {
+					sessionsPool[idx].Release()
+				}
+				return
+			default:
+				for idx := range sessionsPool {
+					db.sessChan <- sessionsPool[idx]
+				}
 			}
 		}
 	}()
 }
 
-func (db *NGDB) initSess(size int) {
-	for idx := 0; idx < size; idx++ {
-		db.newSession(true)
-	}
-}
-
-func (db *NGDB) newSession(must bool) bool {
+func (db *NGDB) newSession() (*nebula.Session, error) {
 	sess, err := db.pool.GetSession(db.username, db.password)
 	if err != nil {
-		if must {
-			log.Fatalf("pool get session err: %v", err)
-		}
-		log.Errorf("ngdb get session err: %v", err)
-		return false
+		log.Warnf("ngdb get session err: %v", err)
+		return sess, err
 	}
 
-	db.sessChan <- sess
-
-	return true
+	return sess, nil
 }
 
 func (db *NGDB) prepare() (sess *nebula.Session, err error) {
@@ -87,7 +105,6 @@ func (db *NGDB) prepare() (sess *nebula.Session, err error) {
 
 	_, err = sess.Execute("USE " + db.space)
 	if err != nil {
-		db.release(sess)
 		return nil, err
 	}
 
@@ -122,6 +139,12 @@ func NewNGDB(space string, config ...Config) (*NGDB, error) {
 		cfg.PoolSize = 10
 	}
 
+	if cfg.Ctx == nil {
+		db.ctx, db.cancel = context.WithCancel(context.Background())
+	} else {
+		db.ctx, db.cancel = context.WithCancel(cfg.Ctx)
+	}
+
 	SetLogLevel(cfg.LogLevel)
 
 	for _, s := range cfg.Servers {
@@ -145,9 +168,13 @@ func NewNGDB(space string, config ...Config) (*NGDB, error) {
 		return db, err
 	}
 
-	db.sessChan = make(chan *nebula.Session, cfg.PoolSize)
+	db.sessChan = make(chan *nebula.Session)
 
 	db.initSess(cfg.PoolSize)
 
 	return db, nil
+}
+
+func (nd *NGDB) Close() {
+	nd.cancel()
 }

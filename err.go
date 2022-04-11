@@ -10,10 +10,11 @@ var (
 	ErrorModelNotPtr      = errors.New("model type must be ptr")
 	ErrorInvalidModel     = errors.New("model ptr invalid")
 	ErrorInvalidModelType = errors.New("model type invalid")
+	ErrorColumnNotFound   = errors.New("model column not found")
 )
 
-func ErrorColumnNotFound(column string) error {
-	return fmt.Errorf("model column: %s not found", column)
+func ErrorColumnNotFoundGen(column string) error {
+	return fmt.Errorf("%w: %s", ErrorColumnNotFound, column)
 }
 
 // ErrorUnknownNebulaValueType 无法处理的 nebula 数据类型
