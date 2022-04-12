@@ -38,6 +38,7 @@ func (db *NGDB) getSession(duration ...time.Duration) (*nebula.Session, error) {
 	if len(duration) > 0 {
 		select {
 		case <-time.After(duration[0]):
+			// todo ErrorType
 			return nil, errors.New("get session timeout")
 		case session := <-db.sessChan:
 			return session, nil
@@ -100,6 +101,7 @@ func (db *NGDB) prepare() (sess *nebula.Session, err error) {
 	}
 
 	if sess == nil {
+		// todo ErrorType
 		return sess, errors.New("invalid session")
 	}
 

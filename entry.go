@@ -31,18 +31,21 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 	)
 
 	if e.db == nil {
+		// todo ErrorType
 		return set, errors.New("entry with nil db")
 	}
 
 	if ngql == "" && e.ctrl != nil {
 		ngql, err = e.ctrl.genngql()
 		if err != nil {
+			// todo ErrorType
 			log.Errorf("generate ngql err: %v", err)
 			return set, err
 		}
 	}
 
 	if ngql == "" {
+		// todo ErrorType
 		return set, errors.New("empty ngql")
 	}
 
@@ -180,6 +183,7 @@ func (e *entry) finds(models ...interface{}) error {
 
 	colSize := resultSet.GetColSize()
 	if len(models) != colSize {
+		// todo ErrorType
 		return errors.New("model size not compatible with result column size")
 	}
 

@@ -41,13 +41,13 @@ func (fc *FetchController) Key(key string) *FetchController {
 
 func (fc *FetchController) genngql(model interface{}) (string, error) {
 	if len(fc.ids) == 0 {
-		return "", errors.New("ids length must greater than 0")
+		return "", ErrorSyntaxGen("ids length must greater than 0")
 	}
 
 	ids := strings.Join(fc.ids, ", ")
 
 	if fc.key == "" {
-		return "", errors.New("fetch tags must specify key")
+		return "", ErrorSyntaxGen("fetch tags must specify key")
 	}
 
 	if len(fc.tags) == 1 && fc.tags[0] == "*" {
@@ -129,6 +129,7 @@ func (fc *FetchController) Find(model interface{}) error {
 	}
 
 	if fc.ngql == "" {
+		// todo ErrorType
 		return errors.New("empty ngql")
 	}
 
@@ -169,15 +170,15 @@ func (fp *FetchPathController) Path(paths ...string) *FetchPathController {
 
 func (fp *FetchPathController) genngql() (string, error) {
 	if fp.edge == "" {
-		return "", errors.New("edge can't be ''")
+		return "", ErrorSyntaxGen("edge can't be ''")
 	}
 
 	if len(fp.paths) == 0 {
-		return "", errors.New("length of paths can't be 0")
+		return "", ErrorSyntaxGen("length of paths can't be 0")
 	}
 
 	if fp.key == "" {
-		return "", errors.New("key can't be ''")
+		return "", ErrorSyntaxGen("key can't be ''")
 	}
 
 	p := strings.Join(fp.paths, ", ")

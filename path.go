@@ -1,7 +1,6 @@
 package ngorm
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -57,17 +56,17 @@ func (pe *PathController) Upto(num int) *PathController {
 
 func (pe *PathController) genngql() (ngql string, err error) {
 	if pe.from == "" {
-		err = errors.New("from value can't be empty")
+		err = ErrorSyntaxGen("from value can't be empty")
 		return
 	}
 
 	if pe.to == "" {
-		err = errors.New("to value can't be empty")
+		err = ErrorSyntaxGen("to value can't be empty")
 		return
 	}
 
 	if pe.over == "" {
-		err = errors.New("over value can't be empty")
+		err = ErrorSyntaxGen("over value can't be empty")
 		return
 	}
 
@@ -75,7 +74,7 @@ func (pe *PathController) genngql() (ngql string, err error) {
 	case "SHORTEST", "ALL", "NOLOOP":
 		//	pass
 	default:
-		err = errors.New("path only accept 'SHORTEST | ALL | NOLOOP' 3 kinds")
+		err = ErrorSyntaxGen("path only accept 'SHORTEST | ALL | NOLOOP' 3 kinds")
 		return
 	}
 

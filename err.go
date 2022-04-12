@@ -11,7 +11,12 @@ var (
 	ErrorInvalidModel     = errors.New("model ptr invalid")
 	ErrorInvalidModelType = errors.New("model type invalid")
 	ErrorColumnNotFound   = errors.New("model column not found")
+	ErrorSyntax           = errors.New("syntax err")
 )
+
+func ErrorSyntaxGen(err string) error {
+	return fmt.Errorf("%w: %s", ErrorSyntax, err)
+}
 
 func ErrorColumnNotFoundGen(column string) error {
 	return fmt.Errorf("%w: %s", ErrorColumnNotFound, column)

@@ -1,7 +1,6 @@
 package ngorm
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -73,15 +72,15 @@ func (g *GoController) Offset(offset int) *GoController {
 
 func (g *GoController) genngql() (ngql string, err error) {
 	if len(g.from) == 0 {
-		return ngql, errors.New("must specify from vertex")
+		return ngql, ErrorSyntaxGen("must specify from vertex")
 	}
 
 	if g.over == "" {
-		return ngql, errors.New("over is ''")
+		return ngql, ErrorSyntaxGen("over is ''")
 	}
 
 	if len(g.steps) > 2 {
-		return ngql, errors.New("steps length only accept 0,1,2")
+		return ngql, ErrorSyntaxGen("steps length only accept 0,1,2")
 	}
 
 	var (
@@ -95,7 +94,7 @@ func (g *GoController) genngql() (ngql string, err error) {
 	case 0:
 		stepPart = ""
 		if len(g.step_limits) > 1 {
-			return ngql, errors.New("SemanticError: length must be equal to GO step size")
+			return ngql, ErrorSyntaxGen("length must be equal to GO step size")
 		} else if len(g.step_limits) == 1 {
 			stepLimits = fmt.Sprintf("LIMIT [%d]", g.step_limits[0])
 		}
@@ -103,7 +102,7 @@ func (g *GoController) genngql() (ngql string, err error) {
 		stepPart = fmt.Sprintf("%d STEPS", g.steps[0])
 		if len(g.step_limits) > 0 {
 			if len(g.step_limits) != g.steps[0] {
-				return ngql, errors.New("SemanticError: length must be equal to GO step size")
+				return ngql, ErrorSyntaxGen("length must be equal to GO step size")
 			}
 
 			ls := make([]string, 0, len(g.step_limits))
@@ -116,13 +115,13 @@ func (g *GoController) genngql() (ngql string, err error) {
 
 	case 2:
 		if g.steps[1] < g.steps[0] {
-			return ngql, errors.New("SemanticError: upper bound steps should be greater than lower bound")
+			return ngql, ErrorSyntaxGen("upper bound steps should be greater than lower bound")
 		}
 
 		stepPart = fmt.Sprintf("%d TO %d STEPS", g.steps[0], g.steps[1])
 		if len(g.step_limits) > 0 {
 			if len(g.step_limits)-1 != g.steps[1]-g.steps[0] {
-				return ngql, errors.New("SemanticError: length must be equal to GO step size")
+				return ngql, ErrorSyntaxGen("length must be equal to GO step size")
 			}
 
 			ls := make([]string, 0, len(g.step_limits))
