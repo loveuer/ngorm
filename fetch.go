@@ -107,7 +107,6 @@ func (fc *FetchController) getTags(model interface{}) ([]string, error) {
 
 	for index := 0; index < rt.NumField(); index++ {
 		ftag := rt.Field(index).Tag.Get("nebula")
-		fmt.Printf("tag: %s\n", ftag)
 		if tag := strings.TrimSpace(ftag); tag != "" && tag != "-" {
 			if _, ok = exclude[tag]; !ok {
 				tags = append(tags, tag)
