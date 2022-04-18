@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/goccy/go-json"
+	"encoding/json"
 
 	"github.com/spf13/cast"
 	nebula "github.com/vesoft-inc/nebula-go/v3"
