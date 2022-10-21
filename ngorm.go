@@ -47,7 +47,7 @@ func (db *NGDB) release(session *nebula.Session) {
 }
 
 type nebulaSessionPool struct {
-	sync.Mutex
+	sync.RWMutex
 	available bool
 	size      int
 	ok        int
@@ -98,7 +98,11 @@ func (db *NGDB) initSess(size int) {
 				return
 			default:
 				for idx := range pool.pool {
-					db.sessChan <- &sessionChannel{idx: idx, session: pool.pool[idx]}
+					pool.RLock()
+					sess := pool.pool[idx]
+					pool.RUnlock()
+
+					db.sessChan <- &sessionChannel{idx: idx, session: sess}
 				}
 			}
 		}
