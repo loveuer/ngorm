@@ -40,6 +40,10 @@ func (fc *FetchController) Key(key string) *FetchController {
 }
 
 func (fc *FetchController) genngql(model interface{}) (string, error) {
+	var (
+		err error
+	)
+
 	if len(fc.ids) == 0 {
 		return "", ErrorSyntaxGen("ids length must greater than 0")
 	}

@@ -11,10 +11,10 @@ var (
 )
 
 func init() {
-	db, err = ngorm.NewNGDB("space_name", ngorm.Config{
+	db, err = ngorm.NewNGDB("test_base", ngorm.Config{
 		LogLevel: ngorm.DebugLevel,
-		Servers:  []ngorm.Service{{Addr: "127.0.0.1", Port: 9669}},
-		Username: "xxx",
+		Servers:  []ngorm.Service{{Addr: "10.220.10.19", Port: 9669}},
+		Username: "root",
 		Password: "xxx",
 	})
 	if err != nil {
@@ -25,9 +25,9 @@ func init() {
 func main() {
 	type Vertex struct {
 		ID      string   `nebula:"VertexID"` // Compatible vid
-		Name    []string `nebula:"Name"`
-		Address []string `nebula:"Address"`
-		Company []string `nebula:"Company"`
+		Name    []string `nebula:"NAMES"`
+		Address []string `nebula:"ADDRESS"`
+		Company []string `nebula:"COMPANY"`
 	}
 
 	vertex := new(Vertex)
@@ -36,7 +36,7 @@ func main() {
 	vms := make([]map[string]interface{}, 0)
 
 	//f := db.Fetch([]string{"Bbp6S7"}...)
-	f := db.Fetch([]string{"vertex-1", "vertex-2"}...)
+	f := db.Fetch([]string{"000164", "00031N6"}...).Key("v")
 	f = f.Tags("*") // find all tags
 	f = f.Tags()    // left tags with empty to find tags in model
 	//err = f.Find(&vm)
@@ -56,7 +56,7 @@ func main() {
 func example2() {
 	type Vertex struct {
 		ID      string `nebula:"VertexID"`
-		Name    string `nebula:"NAME"`
+		Name    string `nebula:"NAMES"`
 		Company string `nebula:"COMPANY"`
 	}
 

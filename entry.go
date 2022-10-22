@@ -1,6 +1,7 @@
 package ngorm
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -45,16 +46,15 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 	}
 
 	if ngql == "" {
-		// todo ErrorType
 		return set, errors.New("empty ngql")
 	}
 
-	e.session, err = e.db.prepare()
-	if err != nil {
+	if e.session, err = e.db.prepare(context.TODO()); err != nil {
 		log.Errorf("get session err: %v", err)
+		return nil, err
 	}
 
-	//defer e.db.release(e.session)
+	defer e.session.Release()
 
 	log.Infof("ngql: %s", ngql)
 

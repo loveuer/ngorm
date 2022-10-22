@@ -6,11 +6,11 @@ import (
 )
 
 func main() {
-	db, err := ngorm.NewNGDB("Test", ngorm.Config{
+	db, err := ngorm.NewNGDB("test_base", ngorm.Config{
 		LogLevel: ngorm.DebugLevel,
 		Servers:  []ngorm.Service{{Addr: "", Port: 8080}},
-		Username: "admin",
-		Password: "admin",
+		Username: "root",
+		Password: "xxx",
 	})
 	if err != nil {
 		log.Fatalf("can't new ngdb with err: %v", err)

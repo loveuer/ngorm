@@ -2,8 +2,11 @@ package ngorm
 
 import (
 	"context"
+	"errors"
+	"github.com/sirupsen/logrus"
 	nebula "github.com/vesoft-inc/nebula-go/v3"
 	"sync"
+	"time"
 )
 
 type Service struct {
@@ -20,11 +23,6 @@ type Config struct {
 	LogLevel LogLevel
 }
 
-type sessionChannel struct {
-	idx     int
-	session *nebula.Session
-}
-
 type NGDB struct {
 	sync.Mutex
 	ctx      context.Context
@@ -33,147 +31,71 @@ type NGDB struct {
 	pool     *nebula.ConnectionPool
 	username string
 	password string
-	sessChan chan *sessionChannel
+	timeout  int
 }
 
-func (db *NGDB) getSession() (*sessionChannel, error) {
-	sch := <-db.sessChan
-	return sch, nil
-}
-
-// Deprecated
-func (db *NGDB) release(session *nebula.Session) {
-	session.Release()
-}
-
-type nebulaSessionPool struct {
-	sync.RWMutex
-	available bool
-	size      int
-	ok        int
-	pool      map[int]*nebula.Session
-}
-
-var (
-	err  error
-	pool = &nebulaSessionPool{
-		ok:   0,
-		pool: make(map[int]*nebula.Session),
-	}
-	nglog             = nebula.DefaultLogger{}
-	hostList          = make([]nebula.HostAddress, 0)
-	defaultPoolConfig = nebula.GetDefaultConf()
-)
-
-func (db *NGDB) initSess(size int) {
-	pool.size = size
-	for idx := 0; idx < size; idx++ {
-		if sess, err := db.newSession(); err != nil {
-			log.Warnf("init nebula session[%d] err: %v", idx, err)
-			pool.pool[idx] = nil
-		} else {
-			log.Debugf("init nebula session[%d] success", idx)
-			pool.pool[idx] = sess
-			pool.ok++
-			pool.available = true
-		}
-	}
-
-	if pool.ok == 0 {
-		pool.available = false
-		log.Panic("session pool length == 0")
-	}
-
-	log.Infof("inited [%d] nebula sessions", pool.size)
+func (db *NGDB) getSession(ctx context.Context) (*nebula.Session, error) {
+	var (
+		err     error
+		ch      = make(chan *nebula.Session)
+		fctx, _ = context.WithTimeout(ctx, 30*time.Second)
+	)
 
 	go func() {
-		for {
-			select {
-			case <-db.ctx.Done():
-				for idx := range pool.pool {
-					if pool.pool[idx] != nil {
-						pool.pool[idx].Release()
-					}
-				}
-				return
-			default:
-				for idx := range pool.pool {
-					pool.RLock()
-					sess := pool.pool[idx]
-					pool.RUnlock()
+		var (
+			sess *nebula.Session
+		)
 
-					db.sessChan <- &sessionChannel{idx: idx, session: sess}
-				}
+		for {
+			if sess, err = db.newSession(); err != nil {
+				logrus.Debugf("nubela new session err: %v", err)
+				continue
 			}
+
+			break
 		}
+
+		ch <- sess
 	}()
+
+	select {
+	case newSess := <-ch:
+		return newSess, nil
+	case <-fctx.Done():
+		return nil, errors.New("acquire new nebula session timeout")
+	}
 }
 
 func (db *NGDB) newSession() (*nebula.Session, error) {
-	// todo renew connection pool
-	sess, err := db.pool.GetSession(db.username, db.password)
-	if err == nil {
-		return sess, err
+	return db.pool.GetSession(db.username, db.password)
+}
+
+func (db *NGDB) prepare(ctx context.Context) (*nebula.Session, error) {
+	var (
+		err  error
+		sess *nebula.Session
+	)
+
+	if sess, err = db.getSession(ctx); err != nil {
+		return nil, err
 	}
 
-	log.Warnf("ngdb connection pool get session err: %v", err)
-
-	db.Lock()
-	db.pool, err = nebula.NewConnectionPool(hostList, defaultPoolConfig, nglog)
-	db.Unlock()
-	if err != nil {
-
-	}
-
-	if sess, err = db.pool.GetSession(db.username, db.password); err != nil {
-		log.Errorf("ngdb connection pool get session(twice) err: %v", err)
-		return sess, err
+	if _, err = sess.Execute("USE " + db.space); err != nil {
+		return nil, err
 	}
 
 	return sess, nil
 }
 
-func (db *NGDB) prepare() (*nebula.Session, error) {
-	var (
-		sch     *sessionChannel
-		session *nebula.Session
-		err     error
-	)
-
-	defer func() {
-		pool.Lock()
-		pool.pool[sch.idx] = session
-		pool.Unlock()
-	}()
-
-	sch, _ = db.getSession()
-	if sch.session == nil {
-		session, err = db.newSession()
-	} else {
-		session = sch.session
-	}
-
-	if _, err = session.Execute("USE " + db.space); err == nil {
-		return session, nil
-	}
-
-	if session, err = db.newSession(); err != nil {
-		session = nil
-		return session, err
-	}
-
-	if _, err = session.Execute("USE " + db.space); err != nil {
-		session = nil
-		return session, err
-	}
-
-	return session, nil
-}
-
 func NewNGDB(space string, config ...Config) (*NGDB, error) {
 	var (
-		cfg Config
-		db  = new(NGDB)
+		err      error
+		cfg      Config
+		db       = new(NGDB)
+		hostList = make([]nebula.HostAddress, 0)
+		//nglog             = logrus.New()
+		nglog             = nebula.DefaultLogger{}
+		defaultPoolConfig = nebula.GetDefaultConf()
 	)
 
 	if len(config) > 0 {
@@ -210,6 +132,7 @@ func NewNGDB(space string, config ...Config) (*NGDB, error) {
 
 	defaultPoolConfig.MaxConnPoolSize = cfg.PoolSize
 	defaultPoolConfig.MinConnPoolSize = cfg.PoolSize
+
 	db.space = space
 	db.username = cfg.Username
 	db.password = cfg.Password
@@ -219,10 +142,6 @@ func NewNGDB(space string, config ...Config) (*NGDB, error) {
 		log.Errorf("can't constructs new connection pool, err: %v", err)
 		return db, err
 	}
-
-	db.sessChan = make(chan *sessionChannel)
-
-	db.initSess(cfg.PoolSize)
 
 	return db, nil
 }
