@@ -3,10 +3,11 @@ package ngorm
 import (
 	"context"
 	"errors"
-	"github.com/sirupsen/logrus"
-	nebula "github.com/vesoft-inc/nebula-go/v3"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	nebula "github.com/vesoft-inc/nebula-go/v3"
 )
 
 type Service struct {
@@ -142,6 +143,8 @@ func NewNGDB(space string, config ...Config) (*NGDB, error) {
 		log.Errorf("can't constructs new connection pool, err: %v", err)
 		return db, err
 	}
+
+	log.Infof("inited nebula connection pool(size: %d)", defaultPoolConfig.MinConnPoolSize)
 
 	return db, nil
 }

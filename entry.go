@@ -183,7 +183,6 @@ func (e *entry) finds(models ...interface{}) error {
 
 	colSize := resultSet.GetColSize()
 	if len(models) != colSize {
-		// todo ErrorType
 		return errors.New("model size not compatible with result column size")
 	}
 
