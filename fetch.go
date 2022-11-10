@@ -8,12 +8,13 @@ import (
 )
 
 type FetchController struct {
-	db   *NGDB
-	tags []string
-	ids  []string
-	key  string
-	ngql string
-	err  error
+	db             *NGDB
+	tags           []string
+	ids            []string
+	key            string
+	ngql           string
+	err            error
+	sessionTimeout int
 }
 
 func (db *NGDB) Fetch(ids ...string) *FetchController {
@@ -36,6 +37,11 @@ func (fc *FetchController) Tags(tags ...string) *FetchController {
 // Key Tag properties.k-v key
 func (fc *FetchController) Key(key string) *FetchController {
 	fc.key = key
+	return fc
+}
+
+func (fc *FetchController) SetTimeout(second int) *FetchController {
+	fc.sessionTimeout = second
 	return fc
 }
 
@@ -124,7 +130,7 @@ func (fc *FetchController) getTags(model interface{}) ([]string, error) {
 func (fc *FetchController) Find(model interface{}) error {
 	var (
 		err error
-		e   = &entry{db: fc.db}
+		e   = &entry{db: fc.db, sessionTimeout: fc.sessionTimeout}
 	)
 
 	if fc.ngql, err = fc.genngql(model); err != nil {
@@ -146,12 +152,13 @@ func (fc *FetchController) Find(model interface{}) error {
 }
 
 type FetchPathController struct {
-	db    *NGDB
-	edge  string
-	paths []string
-	key   string
-	ngql  string
-	err   error
+	db             *NGDB
+	edge           string
+	paths          []string
+	key            string
+	ngql           string
+	err            error
+	sessionTimeout int
 }
 
 func (db *NGDB) FetchPath(edge string) *FetchPathController {
@@ -168,6 +175,11 @@ func (fp *FetchPathController) Key(key string) *FetchPathController {
 
 func (fp *FetchPathController) Path(paths ...string) *FetchPathController {
 	fp.paths = paths
+	return fp
+}
+
+func (fp *FetchPathController) SetTimeout(second int) *FetchPathController {
+	fp.sessionTimeout = second
 	return fp
 }
 
@@ -190,7 +202,7 @@ func (fp *FetchPathController) genngql() (string, error) {
 }
 
 func (fp *FetchPathController) Find(model interface{}) error {
-	e := &entry{db: fp.db, ctrl: fp}
+	e := &entry{db: fp.db, ctrl: fp, sessionTimeout: fp.sessionTimeout}
 
 	return e.find(model)
 }

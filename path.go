@@ -14,12 +14,13 @@ type Relationship struct {
 }
 
 type PathController struct {
-	db   *NGDB
-	path string
-	from string
-	to   string
-	over string
-	upto int
+	db              *NGDB
+	path            string
+	from            string
+	to              string
+	over            string
+	upto            int
+	sesstionTimeout int
 }
 
 func (db *NGDB) Path(pathKind string) *PathController {
@@ -51,6 +52,11 @@ func (pe *PathController) Over(over string) *PathController {
 func (pe *PathController) Upto(num int) *PathController {
 	pe.upto = num
 
+	return pe
+}
+
+func (pe *PathController) SetTimeout(second int) *PathController {
+	pe.sesstionTimeout = second
 	return pe
 }
 
@@ -89,7 +95,7 @@ func (pe *PathController) genngql() (ngql string, err error) {
 }
 
 func (pe *PathController) Value() (*nebula.ResultSet, error) {
-	e := &entry{db: pe.db, ctrl: pe}
+	e := &entry{db: pe.db, ctrl: pe, sessionTimeout: pe.sesstionTimeout}
 
 	return e.value()
 }
@@ -97,7 +103,7 @@ func (pe *PathController) Value() (*nebula.ResultSet, error) {
 func (pe *PathController) Find() ([][]Relationship, error) {
 	var result [][]Relationship
 
-	e := &entry{db: pe.db, ctrl: pe}
+	e := &entry{db: pe.db, ctrl: pe, sessionTimeout: pe.sesstionTimeout}
 
 	set, err := e.value()
 	if err != nil {

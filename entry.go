@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	"encoding/json"
 
@@ -17,9 +18,10 @@ type controller interface {
 }
 
 type entry struct {
-	db      *NGDB
-	session *nebula.Session
-	ngql    string
+	db             *NGDB
+	session        *nebula.Session
+	ngql           string
+	sessionTimeout int
 
 	ctrl controller
 }
@@ -29,6 +31,7 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 		set  *nebula.ResultSet
 		ngql string = e.ngql
 		err  error
+		ctx  = context.Background()
 	)
 
 	if e.db == nil {
@@ -49,7 +52,11 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 		return set, errors.New("empty ngql")
 	}
 
-	if e.session, err = e.db.prepare(context.TODO()); err != nil {
+	if e.sessionTimeout >= 0 {
+		ctx, _ = context.WithTimeout(ctx, time.Duration(e.sessionTimeout)*time.Second)
+	}
+
+	if e.session, err = e.db.prepare(ctx); err != nil {
 		log.Errorf("get session err: %v", err)
 		return nil, err
 	}

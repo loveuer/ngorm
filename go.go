@@ -9,14 +9,15 @@ import (
 )
 
 type GoController struct {
-	db            *NGDB
-	from          []string
-	steps         []int
-	over          string
-	yields        []string
-	step_limits   []int
-	limit, offset int
-	err           error
+	db             *NGDB
+	from           []string
+	steps          []int
+	over           string
+	yields         []string
+	step_limits    []int
+	limit, offset  int
+	err            error
+	sessionTimeout int
 }
 
 func (db *NGDB) GOFrom(from ...string) *GoController {
@@ -48,9 +49,11 @@ func (g *GoController) Yield(yields ...string) *GoController {
 
 /*
 StepLimit:
-	- (文档详见)[https://docs.nebula-graph.com.cn/3.0.2/3.ngql-guide/8.clauses-and-options/limit/]
-	- `限制每一步（steps）的 limits`
+  - (文档详见)[https://docs.nebula-graph.com.cn/3.0.2/3.ngql-guide/8.clauses-and-options/limit/]
+  - `限制每一步（steps）的 limits`
+
 Examples:
+
 	// 表示 1 - 3 步 分别限制 2个， 3个， 4个 结果
 	// 在 管道 之前的限制，效果更加理想
 	GOFrom("xxx").Step(1, 3).Over("edge").Yield("edge._dst").StepLimit([]int{2,3,4})
@@ -67,6 +70,11 @@ func (g *GoController) Limit(limit int) *GoController {
 
 func (g *GoController) Offset(offset int) *GoController {
 	g.offset = offset
+	return g
+}
+
+func (g *GoController) SetTimeout(second int) *GoController {
+	g.sessionTimeout = second
 	return g
 }
 
@@ -151,12 +159,12 @@ func (g *GoController) genngql() (ngql string, err error) {
 }
 
 func (g *GoController) Value() (*nebula.ResultSet, error) {
-	e := &entry{db: g.db, ctrl: g}
+	e := &entry{db: g.db, ctrl: g, sessionTimeout: g.sessionTimeout}
 	return e.value()
 }
 
 func (g *GoController) Finds(models ...interface{}) error {
-	e := &entry{db: g.db, ctrl: g}
+	e := &entry{db: g.db, ctrl: g, sessionTimeout: g.sessionTimeout}
 
 	return e.finds(models...)
 }
