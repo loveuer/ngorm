@@ -52,7 +52,7 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 		return set, errors.New("empty ngql")
 	}
 
-	if e.sessionTimeout >= 0 {
+	if e.sessionTimeout > 0 {
 		ctx, _ = context.WithTimeout(ctx, time.Duration(e.sessionTimeout)*time.Second)
 	}
 
