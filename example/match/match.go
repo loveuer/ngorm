@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"gitee.com/loveuer/ngorm"
+	"github.com/loveuer/ngorm"
 	"github.com/ysmood/got/lib/gop"
 )
 

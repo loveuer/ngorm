@@ -1,4 +1,4 @@
-module gitee.com/loveuer/ngorm
+module github.com/loveuer/ngorm
 
 go 1.17
 

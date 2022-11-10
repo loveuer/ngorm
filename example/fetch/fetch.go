@@ -1,8 +1,9 @@
 package main
 
 import (
-	"gitee.com/loveuer/ngorm"
 	"log"
+
+	"github.com/loveuer/ngorm"
 )
 
 var (
