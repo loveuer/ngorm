@@ -153,7 +153,7 @@ func NewNGDB(space string, config ...Config) (*NGDB, error) {
 		hostList = append(hostList, hostAddr)
 	}
 
-	defaultPoolConfig.MaxConnPoolSize = cfg.PoolSize
+	defaultPoolConfig.MaxConnPoolSize = 2 * cfg.PoolSize
 	defaultPoolConfig.MinConnPoolSize = cfg.PoolSize
 
 	db.space = space
