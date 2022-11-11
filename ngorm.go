@@ -3,6 +3,7 @@ package ngorm
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -29,7 +30,8 @@ type NGDB struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
 	space    string
-	pool     *nebula.ConnectionPool
+	pool1    *nebula.ConnectionPool
+	pool2    *nebula.ConnectionPool
 	username string
 	password string
 	timeout  int
@@ -44,12 +46,15 @@ func (db *NGDB) getSession(ctx context.Context) (*nebula.Session, error) {
 
 	go func() {
 		var (
-			sess *nebula.Session
+			sess  *nebula.Session
+			count = 0
 		)
 
 		for {
-			if sess, err = db.newSession(); err != nil {
+			if sess, err = db.newSession(count % 2); err != nil {
+				count++
 				logrus.Debugf("nubela new session err: %v", err)
+				time.Sleep(200 * time.Millisecond)
 				continue
 			}
 
@@ -67,8 +72,23 @@ func (db *NGDB) getSession(ctx context.Context) (*nebula.Session, error) {
 	}
 }
 
-func (db *NGDB) newSession() (*nebula.Session, error) {
-	return db.pool.GetSession(db.username, db.password)
+func (db *NGDB) newSession(which int) (*nebula.Session, error) {
+	switch which + 1 {
+	case 1:
+		if db.pool1 == nil {
+			return nil, errors.New("nebula connection pool 1 is nil")
+		}
+
+		return db.pool1.GetSession(db.username, db.password)
+	case 2:
+		if db.pool2 == nil {
+			return nil, errors.New("nebula connection pool 2 is nil")
+		}
+
+		return db.pool2.GetSession(db.username, db.password)
+	default:
+		return nil, fmt.Errorf("err pool idx[%d]", which+1)
+	}
 }
 
 func (db *NGDB) prepare(ctx context.Context) (*nebula.Session, error) {
@@ -91,6 +111,8 @@ func (db *NGDB) prepare(ctx context.Context) (*nebula.Session, error) {
 func NewNGDB(space string, config ...Config) (*NGDB, error) {
 	var (
 		err      error
+		err1     error
+		err2     error
 		cfg      Config
 		db       = new(NGDB)
 		hostList = make([]nebula.HostAddress, 0)
@@ -138,13 +160,20 @@ func NewNGDB(space string, config ...Config) (*NGDB, error) {
 	db.username = cfg.Username
 	db.password = cfg.Password
 
-	db.pool, err = nebula.NewConnectionPool(hostList, defaultPoolConfig, nglog)
-	if err != nil {
-		log.Errorf("can't constructs new connection pool, err: %v", err)
+	if db.pool1, err1 = nebula.NewConnectionPool(hostList, defaultPoolConfig, nglog); err1 != nil {
+		log.Warnf("init nebula connection pool 1 err: %v", err1)
+	}
+
+	if db.pool2, err2 = nebula.NewConnectionPool(hostList, defaultPoolConfig, nglog); err2 != nil {
+		log.Warnf("init nebula connection pool 2 err: %v", err1)
+	}
+
+	if err1 != nil && err2 != nil {
+		log.Errorf("can't constructs new connection pools, err: %v", err)
 		return db, err
 	}
 
-	log.Infof("inited nebula connection pool(size: %d)", defaultPoolConfig.MinConnPoolSize)
+	log.Infof("inited nebula connection pools(size: %d)", defaultPoolConfig.MinConnPoolSize)
 
 	return db, nil
 }
