@@ -478,6 +478,35 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 		case reflect.Float64:
 			rvalue.Set(reflect.ValueOf(num))
 		}
+	case cell.IsMap():
+		m, _ := cell.AsMap()
+		for key := range m {
+			if fieldIdx, ok := mt.fm[key]; ok {
+				ft := rvalue.Field(fieldIdx)
+				val := m[key]
+				switch {
+				case val.IsEmpty(), val.IsNull():
+					continue
+				case val.IsString():
+					str, _ := val.AsString()
+					if err := setStrOrNum(str, ft); err != nil {
+						return err
+					}
+				case val.IsInt():
+					num, _ := val.AsInt()
+					if err := setStrOrNum(num, ft); err != nil {
+						return err
+					}
+				case val.IsFloat():
+					num, _ := val.AsFloat()
+					if err := setStrOrNum(num, ft); err != nil {
+						return err
+					}
+				default:
+					return ErrorUnknownNebulaValueType(val.GetType())
+				}
+			}
+		}
 	case cell.IsVertex():
 		node, _ := cell.AsNode()
 		tags := node.GetTags()

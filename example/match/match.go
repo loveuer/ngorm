@@ -1,10 +1,10 @@
 package main
 
 import (
+	"github.com/ysmood/got/lib/gop"
 	"log"
 
 	"github.com/loveuer/ngorm"
-	"github.com/ysmood/got/lib/gop"
 )
 
 func example1() {
@@ -35,7 +35,7 @@ func example1() {
 	log.Println("src:", src, "dsts:", dsts)
 }
 
-func main() {
+func example2() {
 	db, err := ngorm.NewNGDB("test_base_organization", ngorm.Config{
 		LogLevel: ngorm.DebugLevel,
 		Servers:  []ngorm.Service{{Addr: "10.220.10.19", Port: 9669}},
@@ -70,4 +70,8 @@ func main() {
 	gop.P("user1:\n", u1)
 	gop.P("user2:\n", u2)
 	gop.P("org3:\n", o3)
+}
+
+func main() {
+
 }
