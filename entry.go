@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"reflect"
 	"time"
 
@@ -43,7 +44,7 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 		ngql, err = e.ctrl.genngql()
 		if err != nil {
 			// todo ErrorType
-			log.Errorf("generate ngql err: %v", err)
+			logrus.Errorf("generate ngql err: %v", err)
 			return set, err
 		}
 	}
@@ -57,17 +58,17 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 	}
 
 	if e.session, err = e.db.prepare(ctx); err != nil {
-		log.Errorf("get session err: %v", err)
+		logrus.Errorf("get session err: %v", err)
 		return nil, err
 	}
 
 	defer e.session.Release()
 
-	log.Infof("ngql: %s", ngql)
+	logrus.Infof("ngql: %s", ngql)
 
 	set, err = e.session.Execute(ngql)
 	if err != nil {
-		log.Errorf("session execute err: %v", err)
+		logrus.Errorf("session execute err: %v", err)
 	}
 
 	return set, err
@@ -110,7 +111,7 @@ func (e *entry) find(model interface{}) error {
 	if !mt.isArray {
 		row, err := resultSet.GetRowValuesByIndex(0)
 		if err != nil {
-			log.Errorf("nebula get row value by index err, index: 0, err: %v", err)
+			logrus.Errorf("nebula get row value by index err, index: 0, err: %v", err)
 			return err
 		}
 
@@ -134,7 +135,7 @@ func (e *entry) find(model interface{}) error {
 			for rowIdx := 0; rowIdx < rowSize; rowIdx++ {
 				row, err := resultSet.GetRowValuesByIndex(rowIdx)
 				if err != nil {
-					log.Errorf("nebula get row value by index err, index: %d, err: %v", rowIdx, err)
+					logrus.Errorf("nebula get row value by index err, index: %d, err: %v", rowIdx, err)
 					return err
 				}
 
@@ -156,7 +157,7 @@ func (e *entry) find(model interface{}) error {
 			for rowIdx := 0; rowIdx < rowSize; rowIdx++ {
 				row, err := resultSet.GetRowValuesByIndex(rowIdx)
 				if err != nil {
-					log.Errorf("nebula get row value by index err, index: %d, err: %v", rowIdx, err)
+					logrus.Errorf("nebula get row value by index err, index: %d, err: %v", rowIdx, err)
 					return err
 				}
 
@@ -195,24 +196,31 @@ func (e *entry) finds(models ...interface{}) error {
 
 	colNames := resultSet.GetColNames()
 
-	log.Debugf("col size: %d, model size: %d, col names: %v", colSize, len(models), colNames)
+	logrus.Debugf("col size: %d, model size: %d, col names: %v", colSize, len(models), colNames)
 
 	for colIdx, colName := range colNames {
-		log.Debugf("col idx: %d, col name: %s", colIdx, colName)
-		mt, err := parseModel(models[colIdx])
+		logrus.Debugf("col idx: %d, col name: %s", colIdx, colName)
+
+		var (
+			mt     modelType
+			mv     map[string]interface{}
+			colVal []*nebula.ValueWrapper
+		)
+
+		mt, err = parseModel(models[colIdx])
 		if err != nil {
 			return err
 		}
 
-		colVal, err := resultSet.GetValuesByColName(colName)
+		colVal, err = resultSet.GetValuesByColName(colName)
 		if err != nil {
-			log.Errorf("nebula get column value by col_name err, col_name: %s, err: %v", colName, err)
+			logrus.Errorf("nebula get column value by col_name err, col_name: %s, err: %v", colName, err)
 			return err
 		}
 
 		if !mt.isArray { // mt is not array or slice
 			if mt.isMap { // mt is map
-				mv, err := setCell2Map(colVal[0])
+				mv, err = setCell2Map(colVal[0])
 				if err != nil {
 					return err
 				}
@@ -228,7 +236,7 @@ func (e *entry) finds(models ...interface{}) error {
 			if mt.isMap { // mt is []map
 				mvs := make([]map[string]interface{}, 0)
 				for _, colRow := range colVal {
-					mv, err := setCell2Map(colRow)
+					mv, err = setCell2Map(colRow)
 					if err != nil {
 						return err
 					}
@@ -258,16 +266,16 @@ func (e *entry) finds(models ...interface{}) error {
 
 func setRow2Map(row *nebula.Record, colNames []string) (map[string]interface{}, error) {
 	mv := make(map[string]interface{})
-	log.Debug("columns:", colNames)
+	logrus.Debug("columns:", colNames)
 	for _, colName := range colNames {
-		log.Debugf("getting column, name: %s", colName)
+		logrus.Debugf("getting column, name: %s", colName)
 		valWrapper, err := row.GetValueByColName(colName)
 		if err != nil {
-			log.Errorf("nebula get val by col_name err, col_name: %s, err: %v", colName, err)
+			logrus.Errorf("nebula get val by col_name err, col_name: %s, err: %v", colName, err)
 			return mv, err
 		}
 
-		log.Debugf("col_name: %s, val_type: %s", colNames, valWrapper.GetType())
+		logrus.Debugf("col_name: %s, val_type: %s", colNames, valWrapper.GetType())
 
 		switch {
 		case valWrapper.IsVertex():
@@ -279,7 +287,7 @@ func setRow2Map(row *nebula.Record, colNames []string) (map[string]interface{}, 
 			for _, tag := range tags {
 				props, err := node.Properties(tag)
 				if err != nil {
-					log.Errorf("nebula get node props by tag err, tag: %s, err: %s", tag, err)
+					logrus.Errorf("nebula get node props by tag err, tag: %s, err: %s", tag, err)
 					return mv, err
 				}
 
@@ -391,7 +399,7 @@ func setRow2Model(row *nebula.Record, rvalue reflect.Value, mt modelType) error 
 	for col, idx := range mt.fm {
 		valWrapper, err := row.GetValueByColName(col)
 		if err != nil {
-			log.Warnf("nebula_row get value by col name err, col_name: %s, err: %v", col, err)
+			logrus.Warnf("nebula_row get value by col name err, col_name: %s, err: %v", col, err)
 			continue
 		}
 
@@ -440,40 +448,40 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 		num, _ := cell.AsInt()
 		switch rvalue.Type().Kind() {
 		case reflect.Int:
-			var n int = int(num)
+			var n = int(num)
 			rvalue.Set(reflect.ValueOf(n))
 		case reflect.Int8:
-			var n int8 = int8(num)
+			var n = int8(num)
 			rvalue.Set(reflect.ValueOf(n))
 		case reflect.Int16:
-			var n int16 = int16(num)
+			var n = int16(num)
 			rvalue.Set(reflect.ValueOf(n))
 		case reflect.Int32:
-			var n int32 = int32(num)
+			var n = int32(num)
 			rvalue.Set(reflect.ValueOf(n))
 		case reflect.Int64:
 			rvalue.Set(reflect.ValueOf(num))
 		case reflect.Uint:
-			var n uint = uint(num)
+			var n = uint(num)
 			rvalue.Set(reflect.ValueOf(n))
 		case reflect.Uint8:
-			var n uint8 = uint8(num)
+			var n = uint8(num)
 			rvalue.Set(reflect.ValueOf(n))
 		case reflect.Uint16:
-			var n uint16 = uint16(num)
+			var n = uint16(num)
 			rvalue.Set(reflect.ValueOf(n))
 		case reflect.Uint32:
-			var n uint32 = uint32(num)
+			var n = uint32(num)
 			rvalue.Set(reflect.ValueOf(n))
 		case reflect.Uint64:
-			var n uint64 = uint64(num)
+			var n = uint64(num)
 			rvalue.Set(reflect.ValueOf(n))
 		}
 	case cell.IsFloat():
 		num, _ := cell.AsFloat()
 		switch rvalue.Type().Kind() {
 		case reflect.Float32:
-			var f float32 = float32(num)
+			var f = float32(num)
 			rvalue.Set(reflect.ValueOf(f))
 		case reflect.Float64:
 			rvalue.Set(reflect.ValueOf(num))
@@ -521,7 +529,7 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 			if field == "VertexID" {
 				vertexID, err := node.GetID().AsString()
 				if err != nil {
-					log.Warnf("get vertex id err: %v", err)
+					logrus.Warnf("get vertex id err: %v", err)
 				}
 
 				if err = setStrOrNum(vertexID, ft); err != nil {
@@ -533,7 +541,7 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 
 			props, err := node.Properties(field)
 			if err != nil {
-				log.Warnf("props not found by tag: %s", field)
+				logrus.Warnf("props not found by tag: %s", field)
 				continue
 			}
 
@@ -561,6 +569,8 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 				}
 			}
 		}
+	case cell.IsNull(), cell.IsEmpty():
+		return nil
 	default:
 		return ErrorUnknownNebulaValueType(cell.GetType())
 	}
@@ -571,7 +581,7 @@ func setCell2Struct(cell *nebula.ValueWrapper, rvalue reflect.Value, mt modelTyp
 // 针对我们采用了 json 序列化来存取 复杂数据结构的情况
 func setStrOrNum(val interface{}, ft reflect.Value) error {
 
-	log.Debugf("field type: %s", ft.Type().String())
+	logrus.Debugf("field type: %s", ft.Type().String())
 
 	switch ft.Type().Kind() {
 	case reflect.String:
@@ -581,7 +591,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Int:
 		vint, err := cast.ToIntE(val)
 		if err != nil {
-			log.Errorf("nebula val to int err: %v", err)
+			logrus.Errorf("nebula val to int err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vint))
@@ -590,7 +600,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Int8:
 		vint8, err := cast.ToInt8E(val)
 		if err != nil {
-			log.Errorf("nebula val to int8 err: %v", err)
+			logrus.Errorf("nebula val to int8 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vint8))
@@ -599,7 +609,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Int16:
 		vint16, err := cast.ToInt16E(val)
 		if err != nil {
-			log.Errorf("nebula val to int16 err: %v", err)
+			logrus.Errorf("nebula val to int16 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vint16))
@@ -608,7 +618,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Int32:
 		vint32, err := cast.ToInt32E(val)
 		if err != nil {
-			log.Errorf("nebula val to int32 err: %v", err)
+			logrus.Errorf("nebula val to int32 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vint32))
@@ -617,7 +627,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Int64:
 		vint64, err := cast.ToInt64E(val)
 		if err != nil {
-			log.Errorf("nebula val to int64 err: %v", err)
+			logrus.Errorf("nebula val to int64 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vint64))
@@ -626,7 +636,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Uint:
 		vuint, err := cast.ToUintE(val)
 		if err != nil {
-			log.Errorf("nebula val to uint err: %v", err)
+			logrus.Errorf("nebula val to uint err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vuint))
@@ -635,7 +645,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Uint8:
 		vuint8, err := cast.ToUint8E(val)
 		if err != nil {
-			log.Errorf("nebula val to uint8 err: %v", err)
+			logrus.Errorf("nebula val to uint8 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vuint8))
@@ -644,7 +654,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Uint16:
 		vuint16, err := cast.ToUint16E(val)
 		if err != nil {
-			log.Errorf("nebula val to uint16 err: %v", err)
+			logrus.Errorf("nebula val to uint16 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vuint16))
@@ -653,7 +663,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Uint32:
 		vuint32, err := cast.ToUint32E(val)
 		if err != nil {
-			log.Errorf("nebula val to uint32 err: %v", err)
+			logrus.Errorf("nebula val to uint32 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vuint32))
@@ -662,7 +672,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Uint64:
 		vuint64, err := cast.ToUint64E(val)
 		if err != nil {
-			log.Errorf("nebula val to uint64 err: %v", err)
+			logrus.Errorf("nebula val to uint64 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vuint64))
@@ -671,7 +681,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Float32:
 		vf32, err := cast.ToFloat32E(val)
 		if err != nil {
-			log.Errorf("nebula val to float32 err: %v", err)
+			logrus.Errorf("nebula val to float32 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vf32))
@@ -680,7 +690,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 	case reflect.Float64:
 		vf64, err := cast.ToFloat64E(val)
 		if err != nil {
-			log.Errorf("nebula val to float64 err: %v", err)
+			logrus.Errorf("nebula val to float64 err: %v", err)
 			return err
 		}
 		ft.Set(reflect.ValueOf(vf64))
@@ -690,7 +700,7 @@ func setStrOrNum(val interface{}, ft reflect.Value) error {
 		newOne := reflect.New(ft.Type())
 		if str, err := cast.ToStringE(val); err == nil {
 			if err := json.Unmarshal([]byte(str), newOne.Interface()); err != nil {
-				log.Warnf("unmashal nebula str val to field err, field type: %s, err: %v", ft.Type().String(), err)
+				logrus.Warnf("unmashal nebula str val to field err, field type: %s, err: %v", ft.Type().String(), err)
 			}
 		}
 

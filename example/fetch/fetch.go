@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/loveuer/ngorm"
 )
 
@@ -19,7 +17,7 @@ func init() {
 		Password: "xxx",
 	})
 	if err != nil {
-		log.Fatalf("can't new ngdb with err: %v", err)
+		logrus.Fatalf("can't new ngdb with err: %v", err)
 	}
 }
 
@@ -45,13 +43,13 @@ func main() {
 	err = f.Find(&vertexs)
 	//err = f.Find(&vms)
 	if err != nil {
-		log.Printf("err: %v", err)
+		logrus.Printf("err: %v", err)
 	}
 
-	log.Printf("vertex:  %v", vertex)
-	log.Printf("v map:   %v", vm)
-	log.Printf("vertexs: %v", vertexs)
-	log.Printf("v maps : %v", vms)
+	logrus.Printf("vertex:  %v", vertex)
+	logrus.Printf("v map:   %v", vm)
+	logrus.Printf("vertexs: %v", vertexs)
+	logrus.Printf("v maps : %v", vms)
 }
 
 func example2() {
@@ -63,8 +61,8 @@ func example2() {
 
 	vertexs := make([]Vertex, 0)
 	if err = db.Fetch("vertex-1").Tags("NAME", "COMPANY").Key("name").Find(&vertexs); err != nil {
-		log.Fatalln(err)
+		logrus.Fatalln(err)
 	}
 
-	log.Println("vertexs:", vertexs)
+	logrus.Println("vertexs:", vertexs)
 }

@@ -1,10 +1,8 @@
 package main
 
 import (
-	"github.com/ysmood/got/lib/gop"
-	"log"
-
 	"github.com/loveuer/ngorm"
+	"github.com/ysmood/got/lib/gop"
 )
 
 func example1() {
@@ -15,7 +13,7 @@ func example1() {
 		Password: "xxx",
 	})
 	if err != nil {
-		log.Fatalf("can't new ngdb with err: %v", err)
+		logrus.Fatalf("can't new ngdb with err: %v", err)
 	}
 
 	type Vertex struct {
@@ -29,10 +27,10 @@ func example1() {
 
 	err = db.Match("match (v1) - [e:edge_type] - (v2) where id(v1) == 'vertex-1' return v1, v2").Finds(src, &dsts)
 	if err != nil {
-		log.Fatalln(err)
+		logrus.Fatalln(err)
 	}
 
-	log.Println("src:", src, "dsts:", dsts)
+	logrus.Println("src:", src, "dsts:", dsts)
 }
 
 func example2() {
@@ -43,7 +41,7 @@ func example2() {
 		Password: "xxx",
 	})
 	if err != nil {
-		log.Fatalf("can't new ngdb with err: %v", err)
+		logrus.Fatalf("can't new ngdb with err: %v", err)
 	}
 
 	type User struct {
@@ -64,7 +62,7 @@ func example2() {
 		"match (v:USER_INFO)--(v1:USER_INFO)--(v3:ORG_INFO) where id(v) == '4U2izs' return v,v1, v3 limit 3",
 	).
 		Finds(&u1, &u2, &o3); err != nil {
-		log.Fatalln(err)
+		logrus.Fatalln(err)
 	}
 
 	gop.P("user1:\n", u1)

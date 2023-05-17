@@ -3,6 +3,7 @@ package ngorm
 import (
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"reflect"
 	"strings"
 )
@@ -69,7 +70,7 @@ func (fc *FetchController) genngql(model interface{}) (string, error) {
 			return "", err
 		}
 
-		log.Debugf("compatible get tags: %v", fc.tags)
+		logrus.Debugf("compatible get tags: %v", fc.tags)
 	}
 
 	t := strings.Join(fc.tags, ", ")
@@ -99,7 +100,7 @@ func (fc *FetchController) getTags(model interface{}) ([]string, error) {
 	rv := reflect.ValueOf(model)
 
 	if rv.Type().Kind() != reflect.Ptr {
-		log.Errorf("model type not ptr, but: %s", rv.Type().String())
+		logrus.Errorf("model type not ptr, but: %s", rv.Type().String())
 		return tags, ErrorModelNotPtr
 	}
 

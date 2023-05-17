@@ -53,7 +53,7 @@ func (db *NGDB) getSession(ctx context.Context) (*nebula.Session, error) {
 		for {
 			if sess, err = db.newSession(count % 2); err != nil {
 				count++
-				logrus.Debugf("nubela new session err: %v", err)
+				logrus.Tracef("nubela new session err: %v", err)
 				time.Sleep(200 * time.Millisecond)
 				continue
 			}
@@ -110,13 +110,12 @@ func (db *NGDB) prepare(ctx context.Context) (*nebula.Session, error) {
 
 func NewNGDB(space string, config ...Config) (*NGDB, error) {
 	var (
-		err      error
-		err1     error
-		err2     error
-		cfg      Config
-		db       = new(NGDB)
-		hostList = make([]nebula.HostAddress, 0)
-		//nglog             = logrus.New()
+		err               error
+		err1              error
+		err2              error
+		cfg               Config
+		db                = new(NGDB)
+		hostList          = make([]nebula.HostAddress, 0)
 		nglog             = nebula.DefaultLogger{}
 		defaultPoolConfig = nebula.GetDefaultConf()
 	)
@@ -161,19 +160,19 @@ func NewNGDB(space string, config ...Config) (*NGDB, error) {
 	db.password = cfg.Password
 
 	if db.pool1, err1 = nebula.NewConnectionPool(hostList, defaultPoolConfig, nglog); err1 != nil {
-		log.Warnf("init nebula connection pool 1 err: %v", err1)
+		logrus.Warnf("init nebula connection pool 1 err: %v", err1)
 	}
 
 	if db.pool2, err2 = nebula.NewConnectionPool(hostList, defaultPoolConfig, nglog); err2 != nil {
-		log.Warnf("init nebula connection pool 2 err: %v", err1)
+		logrus.Warnf("init nebula connection pool 2 err: %v", err1)
 	}
 
 	if err1 != nil && err2 != nil {
-		log.Errorf("can't constructs new connection pools, err: %v", err)
+		logrus.Errorf("can't constructs new connection pools, err: %v", err)
 		return db, err
 	}
 
-	log.Infof("inited nebula connection pools(size: %d)", defaultPoolConfig.MinConnPoolSize)
+	logrus.Infof("inited nebula connection pools(size: %d)", defaultPoolConfig.MinConnPoolSize)
 
 	return db, nil
 }
