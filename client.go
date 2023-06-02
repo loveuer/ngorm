@@ -86,3 +86,22 @@ func NewClient(cfg *Config) (*Client, error) {
 
 	return client, nil
 }
+
+func (c *Client) Raw(ngql string) *entity {
+	var (
+		e = &entity{client: c}
+	)
+
+	e.set, e.err = c.client.Execute(ngql)
+	if e.err != nil {
+		c.logger.Debug(fmt.Sprintf("[ngorm] execute '%s' err: %v", ngql, e.err))
+	}
+
+	e.err = e.formatSet()
+
+	return e
+}
+
+func (c *Client) Fetch(ids ...string) *fetchController {
+	return &fetchController{client: c, ids: ids}
+}

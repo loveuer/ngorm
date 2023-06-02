@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"gitlab.umisen.com/tools/ngorm/v2"
 )
@@ -18,9 +19,18 @@ func main() {
 		logrus.Panic(err)
 	}
 
-	var v any
+	app := gin.Default()
 
-	if err = client.Raw("match (v1) return v1 limit 5").Scan(&v); err != nil {
-		logrus.Panic("scan err:", err)
-	}
+	app.GET("/data", func(c *gin.Context) {
+		result, err := client.Raw("GO 1 steps FROM '4m6ziH3' OVER contact YIELD contact._dst AS destination").Result()
+		if err != nil {
+			c.JSON(500, err.Error())
+			c.Abort()
+			return
+		}
+
+		c.JSON(200, result)
+	})
+
+	app.Run(":7667")
 }

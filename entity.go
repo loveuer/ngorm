@@ -32,6 +32,14 @@ func (e *entity) Scan(dest any) error {
 	return nil
 }
 
+func (e *entity) RawResult() (*nebula.ResultSet, error) {
+	return e.set, e.err
+}
+
+func (e *entity) Result() (any, error) {
+	return e.formatted, e.err
+}
+
 func (e *entity) formatSet() error {
 	var (
 		err       error
@@ -138,14 +146,14 @@ func (e *entity) handleValueWrapper(vw *nebula.ValueWrapper) (any, error) {
 		// todo
 		val, _ := vw.AsRelationship()
 		_ = val
-		logrus.Panic("impl this")
+		logrus.Panic("impl this: handle nebula ValueWrapper[IsEdge]")
 	case vw.IsEmpty():
 		return nil, nil
 	case vw.IsGeography():
 		// todo
 		val, _ := vw.AsGeography()
 		_ = val
-		logrus.Panic("impl this")
+		logrus.Panic("impl this: handle nebula ValueWrapper[IsGeography]")
 	case vw.IsList():
 		val, _ := vw.AsList()
 		list := make([]any, 0, len(val))
@@ -180,7 +188,7 @@ func (e *entity) handleValueWrapper(vw *nebula.ValueWrapper) (any, error) {
 		// todo
 		val, _ := vw.AsPath()
 		_ = val
-		logrus.Panic("impl this")
+		logrus.Panic("impl this: handle nebula ValueWrapper[IsPath]")
 	case vw.IsSet():
 		val, _ := vw.AsDedupList()
 		list := make([]any, 0, len(val))
