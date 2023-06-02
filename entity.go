@@ -10,39 +10,57 @@ import (
 
 type entity struct {
 	client    *Client
+	ngql      string
 	set       *nebula.ResultSet
 	err       error
 	formatted any
 }
 
 func (e *entity) Scan(dest any) error {
+	e.execute()
 	if e.err != nil {
 		return e.err
 	}
 
-	if e.set == nil {
-		e.client.logger.Debug("[ngorm] nebula result_set is nil")
-		return ErrResultNil
+	e.formatSet()
+	if e.err != nil {
+		return e.err
 	}
 
-	if e.err = e.formatSet(); e.err != nil {
-		return e.err
+	// todo scan
+	model, err := Parse(dest)
+	if err != nil {
+		logrus.Debug(fmt.Sprintf("[ngorm] parse model err: %v", err))
+		return err
 	}
 
 	return nil
 }
 
 func (e *entity) RawResult() (*nebula.ResultSet, error) {
+	e.execute()
 	return e.set, e.err
 }
 
 func (e *entity) Result() (any, error) {
+	e.execute()
+	if e.err != nil {
+		return nil, e.err
+	}
+
+	e.formatSet()
 	return e.formatted, e.err
 }
 
-func (e *entity) formatSet() error {
+func (e *entity) execute() {
+	e.set, e.err = e.client.client.Execute(e.ngql)
+	if e.err != nil {
+		e.client.logger.Debug(fmt.Sprintf("[ngorm] execute '%s' err: %v", e.ngql, e.err))
+	}
+}
+
+func (e *entity) formatSet() {
 	var (
-		err       error
 		columns   = e.set.GetColNames()
 		formatted = make([]any, 0, len(columns))
 	)
@@ -52,8 +70,8 @@ func (e *entity) formatSet() error {
 			vws []*nebula.ValueWrapper
 		)
 
-		if vws, err = e.set.GetValuesByColName(column); err != nil {
-			e.client.logger.Debug(fmt.Sprintf("[ngorm] get values by column name '%s' err: %v", column, err))
+		if vws, e.err = e.set.GetValuesByColName(column); e.err != nil {
+			e.client.logger.Debug(fmt.Sprintf("[ngorm] get values by column name '%s' err: %v", column, e.err))
 			continue
 		}
 
@@ -61,9 +79,10 @@ func (e *entity) formatSet() error {
 
 		for _, vw := range vws {
 			var data any
-			if data, err = e.handleValueWrapper(vw); err != nil {
-				return err
+			if data, e.err = e.handleValueWrapper(vw); e.err != nil {
+				return
 			}
+
 			datas = append(datas, data)
 		}
 
@@ -83,8 +102,6 @@ func (e *entity) formatSet() error {
 	} else {
 		e.formatted = formatted
 	}
-
-	return nil
 }
 
 func (e *entity) handleValueWrapper(vw *nebula.ValueWrapper) (any, error) {
