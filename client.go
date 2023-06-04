@@ -1,6 +1,7 @@
 package ngorm
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/spf13/cast"
@@ -15,6 +16,7 @@ type Client struct {
 }
 
 type Config struct {
+	Ctx          context.Context
 	Endpoints    []string
 	Username     string
 	Password     string
@@ -39,6 +41,10 @@ func NewClient(cfg *Config) (*Client, error) {
 
 	if cfg.Logger == nil {
 		cfg.Logger = DefaultLogger
+	}
+
+	if cfg.Ctx == nil {
+		cfg.Ctx = context.Background()
 	}
 
 	for _, endpoint := range cfg.Endpoints {
@@ -89,7 +95,7 @@ func NewClient(cfg *Config) (*Client, error) {
 
 func (c *Client) Raw(ngql string) *entity {
 	var (
-		e = &entity{client: c, ngql: ngql}
+		e = &entity{c: c, ngql: ngql, logger: c.logger}
 	)
 
 	return e

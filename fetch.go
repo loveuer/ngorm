@@ -3,27 +3,62 @@ package ngorm
 import (
 	"fmt"
 	nebula "github.com/vesoft-inc/nebula-go/v3"
+	"reflect"
 	"strings"
 )
 
 type fetchController struct {
 	client *Client
 
-	ngql  string
-	key   string
-	ids   []string
-	tags  []string
-	props []string
-}
-
-func (f *fetchController) Props(props ...string) *fetchController {
-	f.props = props
-	return f
+	ngql string
+	key  string
+	ids  []string
+	tags []string
 }
 
 func (f *fetchController) Tags(tags ...string) *fetchController {
 	f.tags = tags
 	return f
+}
+
+func (f *fetchController) Key(key string) *fetchController {
+	f.key = key
+	return f
+}
+
+func (f *fetchController) ctorNGQL(models ...any) error {
+	if len(models) > 0 && models[0] != nil {
+		if model, err := parse(models[0]); err == nil {
+			if model.rt.Kind() == reflect.Struct {
+				ps := make([]string, 0, len(model.tags))
+				for k := range model.tags {
+					ps = append(ps, k)
+				}
+				f.tags = ps
+			}
+		}
+	}
+
+	if f.key == "" {
+		f.key = "v"
+	}
+
+	fields := make([]string, 0, len(f.tags))
+	vids := make([]string, 0, len(f.ids))
+	for _, tag := range f.tags {
+		fields = append(fields, fmt.Sprintf("%s.%s AS %s", tag, f.key, tag))
+	}
+	for _, id := range f.ids {
+		vids = append(vids, fmt.Sprintf("'%s'", id))
+	}
+
+	f.ngql = fmt.Sprintf("FETCH PROP ON %s %s YIELD id(vertex) as VertexID, %s",
+		strings.Join(f.tags, ", "),
+		strings.Join(vids, ", "),
+		strings.Join(fields, ", "),
+	)
+
+	return nil
 }
 
 func (f *fetchController) RawResult() (*nebula.ResultSet, error) {
@@ -35,6 +70,10 @@ func (f *fetchController) Result() (any, error) {
 }
 
 func (f *fetchController) Scan(dest any) error {
+	if err := f.ctorNGQL(dest); err != nil {
+		return err
+	}
+
 	return f.client.Raw(f.ngql).Scan(dest)
 }
 
@@ -44,7 +83,7 @@ func (fc *fetchController) genngql(model any) (string, error) {
 	)
 
 	if len(fc.ids) == 0 {
-		return "", ErrSyntax("ids length must greater than 0")
+		return "", fmt.Errorf("%w: ids length must greater than 0", ErrSyntax)
 	}
 
 	ids := strings.Join(fc.ids, ", ")

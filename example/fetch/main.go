@@ -19,6 +19,8 @@ func main() {
 		logrus.Panic(err)
 	}
 
+	// fetch prop on NAMES,ADDRESS '000164', '00031N6' yield NAMES.v as names, ADDRESS.v as address
+
 	app := gin.Default()
 
 	app.GET("/data", func(c *gin.Context) {

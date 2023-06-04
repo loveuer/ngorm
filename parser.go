@@ -1,7 +1,6 @@
 package ngorm
 
 import (
-	"log"
 	"reflect"
 	"strings"
 )
@@ -9,28 +8,23 @@ import (
 type Tag struct {
 	Index    int
 	TagValue string
-	TagKey   string
 }
 
 type Model struct {
 	isAny   bool
 	isSlice bool
 	isMap   bool
-	tags    map[int]*Tag
+	tags    map[string]*Tag
 	rv      reflect.Value
 	rt      reflect.Type
 }
 
-func Parse(dest any) (*Model, error) {
+func parse(dest any) (*Model, error) {
 	var (
 		rv    = reflect.ValueOf(dest)
 		rt    = reflect.TypeOf(dest)
-		model = &Model{tags: make(map[int]*Tag)}
+		model = &Model{tags: make(map[string]*Tag)}
 	)
-
-	defer func() {
-		log.Printf("[reflect] type kind: %v", model.rt.Kind())
-	}()
 
 	if rv.Type().Kind() != reflect.Ptr {
 		return nil, ErrNotPtr
@@ -71,20 +65,15 @@ func findReflectType(rt reflect.Type) reflect.Type {
 	}
 }
 
-func findModelTags(rt reflect.Type) map[int]*Tag {
-	tagMap := make(map[int]*Tag)
+func findModelTags(rt reflect.Type) map[string]*Tag {
+	tagMap := make(map[string]*Tag)
 	for idx := 0; idx < rt.NumField(); idx++ {
 		tag := strings.TrimSpace(rt.Field(idx).Tag.Get("nebula"))
 		if tag == "" || tag == "-" {
 			continue
 		}
 
-		vs := strings.Split(tag, ".")
-		if len(vs) >= 2 {
-			tagMap[idx] = &Tag{Index: idx, TagValue: vs[0], TagKey: vs[1]}
-		} else {
-			tagMap[idx] = &Tag{Index: idx, TagValue: vs[0], TagKey: "v"}
-		}
+		tagMap[tag] = &Tag{Index: idx, TagValue: tag}
 	}
 
 	return tagMap
