@@ -10,10 +10,16 @@ import (
 type fetchController struct {
 	client *Client
 
-	ngql string
-	key  string
-	ids  []string
-	tags []string
+	model any
+	ngql  string
+	key   string
+	ids   []string
+	tags  []string
+}
+
+func (f *fetchController) Model(model any) *fetchController {
+	f.model = model
+	return f
 }
 
 func (f *fetchController) Tags(tags ...string) *fetchController {
@@ -26,9 +32,9 @@ func (f *fetchController) Key(key string) *fetchController {
 	return f
 }
 
-func (f *fetchController) ctorNGQL(models ...any) error {
-	if len(models) > 0 && models[0] != nil {
-		if model, err := parse(models[0]); err == nil {
+func (f *fetchController) ctorNGQL() error {
+	if f.model != nil {
+		if model, err := parse(f.model); err == nil {
 			if model.rt.Kind() == reflect.Struct {
 				ps := make([]string, 0, len(model.tags))
 				for k := range model.tags {
@@ -62,15 +68,27 @@ func (f *fetchController) ctorNGQL(models ...any) error {
 }
 
 func (f *fetchController) RawResult() (*nebula.ResultSet, error) {
+	if err := f.ctorNGQL(); err != nil {
+		return nil, err
+	}
+
 	return f.client.Raw(f.ngql).RawResult()
 }
 
 func (f *fetchController) Result() (any, error) {
+	if err := f.ctorNGQL(); err != nil {
+		return nil, err
+	}
+
 	return f.client.Raw(f.ngql).Result()
 }
 
 func (f *fetchController) Scan(dest any) error {
-	if err := f.ctorNGQL(dest); err != nil {
+	if f.model == nil {
+		f.model = dest
+	}
+
+	if err := f.ctorNGQL(); err != nil {
 		return err
 	}
 

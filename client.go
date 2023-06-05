@@ -11,12 +11,12 @@ import (
 )
 
 type Client struct {
+	ctx    context.Context
 	client *nebula.SessionPool
 	logger logger
 }
 
 type Config struct {
-	Ctx          context.Context
 	Endpoints    []string
 	Username     string
 	Password     string
@@ -24,7 +24,7 @@ type Config struct {
 	Logger       logger
 }
 
-func NewClient(cfg *Config) (*Client, error) {
+func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 	var (
 		ok             bool
 		err            error
@@ -43,8 +43,8 @@ func NewClient(cfg *Config) (*Client, error) {
 		cfg.Logger = DefaultLogger
 	}
 
-	if cfg.Ctx == nil {
-		cfg.Ctx = context.Background()
+	if ctx == nil {
+		ctx = context.Background()
 	}
 
 	for _, endpoint := range cfg.Endpoints {
@@ -89,6 +89,7 @@ func NewClient(cfg *Config) (*Client, error) {
 
 	client.client = pool
 	client.logger = cfg.Logger
+	client.ctx = ctx
 
 	return client, nil
 }
