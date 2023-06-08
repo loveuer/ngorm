@@ -105,3 +105,7 @@ func (c *Client) Raw(ngql string) *entity {
 func (c *Client) Fetch(ids ...string) *fetchController {
 	return &fetchController{client: c, ids: ids}
 }
+
+func (c *Client) GoFrom(id string) *goController {
+	return &goController{client: c, from: id}
+}

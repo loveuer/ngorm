@@ -95,43 +95,7 @@ func (f *fetchController) Scan(dest any) error {
 	return f.client.Raw(f.ngql).Scan(dest)
 }
 
-func (fc *fetchController) genngql(model any) (string, error) {
-	var (
-	//err error
-	)
-
-	if len(fc.ids) == 0 {
-		return "", fmt.Errorf("%w: ids length must greater than 0", ErrSyntax)
-	}
-
-	ids := strings.Join(fc.ids, ", ")
-
-	if fc.key == "" {
-		fc.key = "v"
-	}
-
-	if len(fc.tags) == 1 && fc.tags[0] == "*" {
-		return fmt.Sprintf("FETCH PROP ON * %s YIELD vertex AS v", ids), nil
-	}
-
-	if len(fc.tags) == 0 {
-		//if fc.tags, err = fc.getTags(model); err != nil {
-		//	return "", err
-		//}
-		//
-		//logrus.Debugf("compatible get tags: %v", fc.tags)
-	}
-
-	t := strings.Join(fc.tags, ", ")
-
-	var (
-		fields = make([]string, 0, len(fc.tags))
-	)
-
-	for _, field := range fc.tags {
-		fields = append(fields, fmt.Sprintf("%s.%s as %s", field, fc.key, field))
-	}
-
-	f := strings.Join(fields, ", ")
-	return fmt.Sprintf("fetch PROP on %s %s yield id(vertex) as VertexID, %s", t, ids, f), nil
+// Deprecated: use Scan instead
+func (f *fetchController) Find(dest any) error {
+	return f.Scan(dest)
 }
