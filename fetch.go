@@ -38,7 +38,9 @@ func (f *fetchController) ctorNGQL() error {
 			if model.rt.Kind() == reflect.Struct {
 				ps := make([]string, 0, len(model.tags))
 				for k := range model.tags {
-					ps = append(ps, k)
+					if k != "VertexID" {
+						ps = append(ps, k)
+					}
 				}
 				f.tags = ps
 			}

@@ -24,11 +24,15 @@ type Config struct {
 	Logger       logger
 }
 
+var (
+	config *nebula.SessionPoolConf
+	cc     *Config
+)
+
 func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 	var (
 		ok             bool
 		err            error
-		config         *nebula.SessionPoolConf
 		pool           *nebula.SessionPool
 		serviceAddress = make([]nebula.HostAddress, 0)
 		client         = &Client{}
@@ -77,6 +81,8 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 		cfg.Password,
 		serviceAddress,
 		cfg.DefaultSpace,
+		nebula.WithMaxSize(50),
+		nebula.WithMinSize(10),
 	); err != nil {
 		cfg.Logger.Debug(fmt.Sprintf("[ngorm] new session pool conf err: %v", err))
 		return nil, err
@@ -90,6 +96,8 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 	client.client = pool
 	client.logger = cfg.Logger
 	client.ctx = ctx
+
+	cc = cfg
 
 	return client, nil
 }

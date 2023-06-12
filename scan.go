@@ -7,7 +7,7 @@ import (
 )
 
 func (e *entity) Scan(dest any) error {
-	e.execute()
+	e.execute(0)
 	if e.err != nil {
 		return e.err
 	}
