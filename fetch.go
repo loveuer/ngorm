@@ -42,7 +42,10 @@ func (f *fetchController) ctorNGQL() error {
 						ps = append(ps, k)
 					}
 				}
-				f.tags = ps
+
+				if !(len(f.tags) > 0 && len(f.tags) < len(ps)) {
+					f.tags = ps
+				}
 			}
 		}
 	}

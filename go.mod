@@ -1,4 +1,4 @@
-module gitlab.umisen.com/tools/ngorm/v2
+module 10.220.10.35/tools/ngorm/v2
 
 go 1.20
 

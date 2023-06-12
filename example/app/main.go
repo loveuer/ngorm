@@ -1,13 +1,19 @@
 package main
 
 import (
+	"10.220.10.35/tools/ngorm/v2"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"gitlab.umisen.com/tools/ngorm/v2"
 	"os/signal"
 	"syscall"
 )
+
+type Vertex struct {
+	Id      string   `json:"id" nebula:"VertexID"`
+	Names   []string `json:"names" nebula:"NAMES"`
+	Address []string `json:"address" nebula:"ADDRESS"`
+}
 
 func main() {
 	gctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -28,13 +34,7 @@ func main() {
 	}
 
 	app := gin.Default()
-	app.GET("/uuid", func(c *gin.Context) {
-		type Vertex struct {
-			Id      string   `json:"id" nebula:"VertexID"`
-			Names   []string `json:"names" nebula:"NAMES"`
-			Address []string `json:"address" nebula:"ADDRESS"`
-		}
-
+	app.GET("/fetch", func(c *gin.Context) {
 		uuid := c.Query("uuid")
 		if uuid == "" {
 			c.JSON(400, "uuid is empty")
@@ -49,6 +49,29 @@ func main() {
 		}
 
 		c.JSON(200, result)
+	})
+
+	app.GET("/go", func(c *gin.Context) {
+		uuid := c.Query("uuid")
+
+		if uuid == "" {
+			c.JSON(400, "uuid is empty")
+			return
+		}
+
+		results := make([]*Vertex, 0)
+
+		if err = client.GoFrom(uuid).
+			Model(&Vertex{}).
+			Over("contact", ngorm.EdgeTypeBoth).
+			Tags("NAMES", "ADDRESS").
+			Key("v").
+			Scan(&results); err != nil {
+			c.JSON(500, err.Error())
+			return
+		}
+
+		c.JSON(200, results)
 	})
 
 	logrus.Fatal(app.Run(":7777"))

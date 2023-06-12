@@ -3,6 +3,7 @@ package ngorm
 import (
 	"fmt"
 	nebula "github.com/vesoft-inc/nebula-go/v3"
+	"reflect"
 	"strings"
 )
 
@@ -15,14 +16,14 @@ const (
 )
 
 type goController struct {
-	client    *Client
-	model     any
-	from      string
-	steps     int
-	edge      string
-	edgeType  string
-	yieldTags []string
-	key       string
+	client   *Client
+	model    any
+	from     string
+	steps    int
+	edge     string
+	edgeType string
+	tags     []string
+	key      string
 
 	offset int
 	limit  int
@@ -62,7 +63,7 @@ func (g *goController) Key(key string) *goController {
 }
 
 func (g *goController) Tags(tags ...string) *goController {
-	g.yieldTags = tags
+	g.tags = tags
 	return g
 }
 
@@ -77,6 +78,23 @@ func (g *goController) Limit(limit int) *goController {
 }
 
 func (g *goController) ctorNGQL() error {
+	if g.model != nil {
+		if model, err := parse(g.model); err == nil {
+			if model.rt.Kind() == reflect.Struct {
+				ps := make([]string, 0, len(model.tags))
+				for k := range model.tags {
+					if k != "VertexID" {
+						ps = append(ps, k)
+					}
+				}
+
+				if !(len(g.tags) > 0 && len(g.tags) < len(ps)) {
+					g.tags = ps
+				}
+			}
+		}
+	}
+
 	if g.steps == 0 {
 		g.steps = 1
 	}
@@ -85,9 +103,9 @@ func (g *goController) ctorNGQL() error {
 		g.key = "v"
 	}
 
-	fs := make([]string, 0, len(g.yieldTags))
+	fs := make([]string, 0, len(g.tags))
 
-	for _, t := range g.yieldTags {
+	for _, t := range g.tags {
 		f := fmt.Sprintf("$$.%s.%s AS %s", t, g.key, t)
 		fs = append(fs, f)
 	}
