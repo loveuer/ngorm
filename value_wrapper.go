@@ -60,6 +60,10 @@ func (e *entity) scanValueWrapper(vw *nebula.ValueWrapper, column string, rv ref
 		vws, err := vw.AsList()
 		if err != nil {
 
+			if vw.IsEmpty() {
+				return nil
+			}
+
 			// 兼容 序列化的 结果
 			var (
 				bsStr string

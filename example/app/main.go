@@ -5,6 +5,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"net/http"
 	"os/signal"
 	"syscall"
 )
@@ -74,5 +75,16 @@ func main() {
 		c.JSON(200, results)
 	})
 
-	logrus.Fatal(app.Run(":7777"))
+	srv := http.Server{Handler: app, Addr: "0.0.0.0:7788"}
+
+	go func() {
+		logrus.Fatal(srv.ListenAndServe())
+	}()
+
+	go func(ctx context.Context) {
+		<-ctx.Done()
+		_ = srv.Shutdown(context.TODO())
+	}(gctx)
+
+	<-gctx.Done()
 }
