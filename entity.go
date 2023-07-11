@@ -24,19 +24,23 @@ func (e *entity) execute(retry int) {
 	if e.err != nil {
 		e.logger.Debug(fmt.Sprintf("[ngorm] execute '%s' err: %v", e.ngql, e.err))
 
-		if strings.Contains(e.err.Error(), "EOF") && retry == 0 {
-			e.logger.Debug("[ngorm] EOF: reconnection...")
+		if retry == 0 {
+			switch {
+			case strings.Contains(e.err.Error(), "EOF"),
+				strings.Contains(e.err.Error(), "broken pipe"):
+				e.logger.Debug("[ngorm] EOF: reconnection...")
 
-			var (
-				err error
-			)
+				var (
+					err error
+				)
 
-			if e.c.client, e.err = nebula.NewSessionPool(*config, cc.Logger); err != nil {
-				e.logger.Debug(fmt.Sprintf("[ngorm] renew session pool err: %v", e.err))
-				return
+				if e.c.client, e.err = nebula.NewSessionPool(*config, cc.Logger); err != nil {
+					e.logger.Debug(fmt.Sprintf("[ngorm] renew session pool err: %v", e.err))
+					return
+				}
+
+				e.execute(retry + 1)
 			}
-
-			e.execute(retry + 1)
 		}
 	}
 }
