@@ -87,7 +87,12 @@ func (e *entity) scanValueWrapper(vw *nebula.ValueWrapper, column string, rv ref
 		// todo
 		return fmt.Errorf("%w: todo: model type too complex", ErrModelTypeUnsupport)
 	case reflect.Struct:
-		return e.scanValueWrapper(vw, column, rv.Field(model.tags[column].Index), model)
+		tag := model.tags[column]
+		if tag == nil {
+			return nil
+		}
+
+		return e.scanValueWrapper(vw, column, rv.Field(tag.Index), model)
 	case reflect.Uintptr, reflect.Complex64, reflect.Complex128, reflect.Chan, reflect.Func, reflect.Pointer, reflect.UnsafePointer:
 		return fmt.Errorf("%w: %s", ErrModelTypeUnsupport, rv.Type().Kind().String())
 	}
