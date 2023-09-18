@@ -44,6 +44,7 @@ func TestFetchToStruct(t *testing.T) {
 		ContactCount     int       `json:"contact_count"`
 		BeContactCount   int       `json:"becontact_count"`
 		Time             time.Time `json:"time"`
+		ChildrenCount    int       `nebula:"CHILDREN_COUNT" json:"children_count"`
 	}
 
 	var (

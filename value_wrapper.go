@@ -11,6 +11,11 @@ import (
 
 func (e *entity) scanValueWrapper(vw *nebula.ValueWrapper, column string, rv reflect.Value, model *Model) error {
 
+	if vw.IsEmpty() || vw.IsNull() {
+		rv.Set(reflect.New(rv.Type()).Elem())
+		return nil
+	}
+
 	switch rv.Type().Kind() {
 	case reflect.Invalid:
 		return ErrModelReflectInvalid
