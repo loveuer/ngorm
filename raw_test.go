@@ -164,21 +164,3 @@ func TestScanVertex2StructSlice(t *testing.T) {
 
 	fmt.Printf("result:\n%s\n", string(bs))
 }
-
-func TestScanString(t *testing.T) {
-	testInit()
-
-	var (
-		s   = ""
-		err error
-		//ngql = "fetch prop on NAMES,ADDRESS '000164', '00031N6' yield NAMES.v as names, ADDRESS.v as address"
-		//ngql = "fetch prop on * '000164', '00031N6' yield vertex as v"
-		ngql = "go 1 steps from 'H8ko' over contact yield id($$) as id | limit 1"
-	)
-
-	if err = client.Raw(ngql).Scan(&s); err != nil {
-		t.Error(err)
-	}
-
-	fmt.Printf("[test] result: %v\n", s)
-}

@@ -56,7 +56,7 @@ func (e *entity) scan(model *Model) error {
 			rv = rv.Elem()
 		}
 
-		for _, column := range columns {
+		for idx, column := range columns {
 			var (
 				vw *nebula.ValueWrapper
 			)
@@ -66,7 +66,7 @@ func (e *entity) scan(model *Model) error {
 				return err
 			}
 
-			if err = e.scanValueWrapper(vw, column, rv, model); err != nil {
+			if err = e.scanValueWrapper(vw, column, rv.Field(idx), model); err != nil {
 				return err
 			}
 		}

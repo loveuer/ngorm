@@ -62,3 +62,39 @@ func TestFetchToStruct(t *testing.T) {
 
 	fmt.Printf("result:\n%s\n", string(bs))
 }
+
+func TestFetch2(t *testing.T) {
+	testInit()
+
+	type Result struct {
+		Uuid             string    `nebula:"VertexID" json:"uuid"`
+		Tid              string    `json:"tid"`
+		Avatar           string    `json:"avatar"`
+		Platform         string    `json:"platform"`
+		OperationType    string    `json:"operation_type"`
+		Rid              string    `json:"rid"`
+		Email            []string  `nebula:"EMAIL" json:"email"`
+		RelationCountDST []string  `nebula:"RELATION_COUNT_DST" json:"relation_count_dst"`
+		Region           []string  `nebula:"ADDRESS" json:"region"`
+		Photo            []string  `nebula:"PHOTO" json:"photo"`
+		Phone            []string  `nebula:"PHONE" json:"phone"`
+		Names            []string  `nebula:"NAMES" json:"names"`
+		ContactCount     int       `json:"contact_count"`
+		BeContactCount   int       `json:"becontact_count"`
+		Time             time.Time `json:"time"`
+	}
+
+	var (
+		ids   = []string{"4m6ziH3", "FmF", "zyW", "1Ghobo"}
+		datas = make([]*Result, 0)
+		err   error
+	)
+
+	if err = client.Fetch(ids...).Tags().Key("v").Scan(&datas); err != nil {
+		t.Error(err)
+	}
+
+	for _, item := range datas {
+		t.Logf("%s: %+v", item.Uuid, *item)
+	}
+}
