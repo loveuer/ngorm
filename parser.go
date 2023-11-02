@@ -15,6 +15,7 @@ type Model struct {
 	isSlice bool
 	isMap   bool
 	tags    map[string]*Tag
+	Fields  map[string]string
 	rv      reflect.Value
 	rt      reflect.Type
 }
@@ -49,6 +50,7 @@ func parse(dest any) (*Model, error) {
 		model.isMap = true
 	case reflect.Struct:
 		model.tags = findModelTags(model.rt)
+		model.Fields = findModelFileds(model.rt)
 	}
 
 	return model, nil
@@ -77,4 +79,17 @@ func findModelTags(rt reflect.Type) map[string]*Tag {
 	}
 
 	return tagMap
+}
+
+func findModelFileds(rt reflect.Type) map[string]string {
+	fields := make(map[string]string)
+	for idx := 0; idx < rt.NumField(); idx++ {
+		tag := strings.TrimSpace(rt.Field(idx).Tag.Get("nebula"))
+		if tag == "" || tag == "-" {
+			continue
+		}
+		fields[tag] = rt.Field(idx).Name
+	}
+
+	return fields
 }

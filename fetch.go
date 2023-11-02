@@ -2,9 +2,10 @@ package ngorm
 
 import (
 	"fmt"
-	nebula "github.com/vesoft-inc/nebula-go/v3"
 	"reflect"
 	"strings"
+
+	nebula "github.com/vesoft-inc/nebula-go/v3"
 )
 
 type fetchController struct {

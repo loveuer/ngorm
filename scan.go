@@ -2,8 +2,9 @@ package ngorm
 
 import (
 	"fmt"
-	nebula "github.com/vesoft-inc/nebula-go/v3"
 	"reflect"
+
+	nebula "github.com/vesoft-inc/nebula-go/v3"
 )
 
 func (e *entity) Scan(dest any) error {
@@ -56,7 +57,7 @@ func (e *entity) scan(model *Model) error {
 			rv = rv.Elem()
 		}
 
-		for idx, column := range columns {
+		for _, column := range columns {
 			var (
 				vw *nebula.ValueWrapper
 			)
@@ -66,7 +67,7 @@ func (e *entity) scan(model *Model) error {
 				return err
 			}
 
-			if err = e.scanValueWrapper(vw, column, rv.Field(idx), model); err != nil {
+			if err = e.scanValueWrapper(vw, column, rv.FieldByName(model.Fields[column]), model); err != nil {
 				return err
 			}
 		}
