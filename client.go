@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/spf13/cast"
-	nebula "github.com/vesoft-inc/nebula-go/v3"
 	"regexp"
 	"strings"
+
+	"github.com/spf13/cast"
+	nebula "github.com/vesoft-inc/nebula-go/v3"
 )
 
 type Client struct {
@@ -116,4 +117,8 @@ func (c *Client) Fetch(ids ...string) *fetchController {
 
 func (c *Client) GoFrom(id string) *goController {
 	return &goController{client: c, from: id}
+}
+
+func (c *Client) MatchHead(value any) *matchController {
+	return &matchController{client: c, head: drop{Number: "head", Value: value}}
 }
