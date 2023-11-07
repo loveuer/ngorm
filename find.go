@@ -50,6 +50,12 @@ func (e *entity) findPath(number string, model *Model) error {
 						return err
 					}
 				}
+				if _, ok := model.Fields["src"]; ok {
+					rv.FieldByName(model.Fields["src"]).SetString(colRowslice[1])
+				}
+				if _, ok := model.Fields["dst"]; ok {
+					rv.FieldByName(model.Fields["dst"]).SetString(colRowslice[2])
+				}
 			}
 			if _, ok := model.Fields["edge"]; ok {
 				rv.FieldByName(model.Fields["edge"]).SetString(colRow.String())

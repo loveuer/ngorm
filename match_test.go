@@ -66,6 +66,8 @@ func TestFind(t *testing.T) {
 	})
 	type edge struct {
 		Edge  string   `nebula:"edge"`
+		Src   string   `nebula:"src"`
+		Dst   string   `nebula:"dst"`
 		Names []string `nebula:"names"`
 	}
 
@@ -76,5 +78,7 @@ func TestFind(t *testing.T) {
 	users := make([]edge, 0)
 	v1 = append(v1, "4m6ziH3")
 	client.MatchHead(&v1).With(ForwardDirection, &v2).Limit(10).FindPath(&users)
-	fmt.Println("users:", users)
+	for i := range users {
+		fmt.Printf("%v:%v\n", i, users[i])
+	}
 }
