@@ -43,7 +43,7 @@ func TestCount(t *testing.T) {
 		Endpoints:    []string{"10.220.10.19:9669"},
 		Username:     "root",
 		Password:     "123",
-		DefaultSpace: "test_base_organization",
+		DefaultSpace: "test_base",
 		Logger:       nil,
 	})
 	var (
@@ -52,7 +52,9 @@ func TestCount(t *testing.T) {
 	)
 	var count int64
 	v1 = append(v1, "4m6ziH3")
-	client.MatchHead(&v1).With(TwoDirection, &v2).CountPath(&count)
+	if err := client.Match(&v1, "head").With(&v2, "v2", ForwardDirection).Where("id(head)", v1).Select("head", "headv2", "v2").Count(&count); err != nil {
+		fmt.Printf("err:%v\n", err)
+	}
 	fmt.Println("count:", count)
 }
 
@@ -64,21 +66,25 @@ func TestFind(t *testing.T) {
 		DefaultSpace: "test_base",
 		Logger:       nil,
 	})
-	type edge struct {
-		Edge  string   `nebula:"edge"`
-		Src   string   `nebula:"src"`
-		Dst   string   `nebula:"dst"`
-		Names []string `nebula:"names"`
+	type FocusListRes struct {
+		Uuid             string   `nebula:"VertexID" json:"uuid"`
+		Email            []string `nebula:"EMAIL" json:"email"`
+		RelationCountDST []string `nebula:"RELATION_COUNT_DST" json:"relation_count_dst"`
+		Region           []string `nebula:"ADDRESS" json:"region"`
+		Photo            []string `nebula:"PHOTO" json:"photo"`
+		Phone            []string `nebula:"PHONE" json:"phone"`
+		Names            []string `nebula:"NAMES" json:"names"`
 	}
-
 	var (
 		v1 = make([]string, 0)
 		v2 = make([]string, 0)
 	)
-	users := make([]edge, 0)
+	users := make([]FocusListRes, 0)
 	v1 = append(v1, "4m6ziH3")
-	client.MatchHead(&v1).With(ForwardDirection, &v2).Limit(10).FindPath(&users)
+	if err := client.Match(&v1, "head").With(&v2, "v2", ForwardDirection).Key("v").Where("id(head)", v1).Select("head").Limit(2).Finds(&users); err != nil {
+		fmt.Printf("err:%v\n", err)
+	}
 	for i := range users {
-		fmt.Printf("%v:%v\n", i, users[i])
+		fmt.Printf("user-------%v:%+v\n", i, users[i])
 	}
 }

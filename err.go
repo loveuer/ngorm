@@ -12,5 +12,6 @@ var (
 	ErrScanObjectsLength   = errors.New("scan objects length error")
 	ErrModelReflectInvalid = errors.New("model reflect invalid")
 	ErrModelTypeUnsupport  = errors.New("model type unsupported")
+	ErrSelectsInvalid      = errors.New("model selects invalid")
 	ErrSyntax              = errors.New("syntax error: %s")
 )

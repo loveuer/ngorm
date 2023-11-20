@@ -119,6 +119,6 @@ func (c *Client) GoFrom(id string) *goController {
 	return &goController{client: c, from: id}
 }
 
-func (c *Client) MatchHead(value any) *matchController {
-	return &matchController{client: c, head: drop{Number: "head", Value: value}}
+func (c *Client) Match(value any, name string) *matchController {
+	return &matchController{client: c, points: []drop{{Name: name, Value: value}}, edgs: make(map[string]struct{})}
 }
