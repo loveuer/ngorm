@@ -75,16 +75,27 @@ func TestFind(t *testing.T) {
 		Phone            []string `nebula:"PHONE" json:"phone"`
 		Names            []string `nebula:"NAMES" json:"names"`
 	}
+	type contact struct {
+		Edge  string   `nebula:"edge"`
+		Src   string   `nebula:"src"`
+		Dst   string   `nebula:"dst"`
+		Rank  int64    `nebula:"rank"`
+		Names []string `nebula:"names"`
+	}
 	var (
 		v1 = make([]string, 0)
 		v2 = make([]string, 0)
 	)
-	users := make([]FocusListRes, 0)
+	users := make([]contact, 0)
+	users2 := make([]FocusListRes, 0)
 	v1 = append(v1, "4m6ziH3")
-	if err := client.Match(&v1, "head").With(&v2, "v2", ForwardDirection).Key("v").Where("id(head)", v1).Select("head").Limit(2).Finds(&users); err != nil {
+	if err := client.Match(&v1, "v1").With(&v2, "v2", ForwardDirection).Key("v").Where("id(v1)", v1).Select("v1v2", "v2").Limit(10).Finds(&users2, &users); err != nil {
 		fmt.Printf("err:%v\n", err)
 	}
 	for i := range users {
 		fmt.Printf("user-------%v:%+v\n", i, users[i])
+	}
+	for i := range users2 {
+		fmt.Printf("users2-------%v:%+v\n", i, users2[i])
 	}
 }
