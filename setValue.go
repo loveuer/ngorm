@@ -65,7 +65,7 @@ func parseModel(model interface{}) (modelType, error) {
 	if mt.isArray {
 		pt = "[]" + pt
 	}
-	logrus.Infof("model type: %s", pt)
+	logrus.Debugf("model type: %s", pt)
 
 	return mt, nil
 }
@@ -103,7 +103,7 @@ func bindValueByRow(val *nebula.ResultSet, model interface{}) error {
 				return err
 			}
 
-			logrus.Info("val wrapper:", valWrapper.GetType())
+			logrus.Debugf("val wrapper:", valWrapper.GetType())
 		}
 	}
 

@@ -64,7 +64,7 @@ func (e *entry) value() (*nebula.ResultSet, error) {
 
 	defer e.session.Release()
 
-	logrus.Infof("ngql: %s", ngql)
+	log.Debugf("ngql: %s", ngql)
 
 	set, err = e.session.Execute(ngql)
 	if err != nil {

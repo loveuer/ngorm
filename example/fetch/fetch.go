@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/loveuer/ngorm"
+	"github.com/sirupsen/logrus"
 )
 
 var (
