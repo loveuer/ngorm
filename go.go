@@ -120,7 +120,7 @@ func (g *goController) ctorNGQL() error {
 	)
 
 	if g.limit > 0 || g.offset > 0 {
-		g.ngql = fmt.Sprintf(" | limit %d, %d", g.offset, g.limit)
+		g.ngql = fmt.Sprintf("%s | limit %d, %d", g.ngql, g.offset, g.limit)
 	}
 
 	return nil
