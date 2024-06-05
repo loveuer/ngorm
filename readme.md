@@ -6,26 +6,8 @@
 
 # Installation
 
-- (for MacOS, Linux)
- 
 ```bash
-export GOINSECURE=10.220.10.35
-export GOPRIVATE=10.220.10.35
-export GONOPROXY=10.220.10.35
-export GONOSUMDB=10.220.10.35
-
-go get 10.220.10.35/tools/ngorm
-```
-
-- (for Windows)
- 
-```
-$env:GOINSECURE="10.220.10.35"
-$env:GOPRIVATE="10.220.10.35"
-$env:GONOPROXY="10.220.10.35"
-$env:GONOSUMDB="10.220.10.35"
-
-go get 10.220.10.35/tools/ngorm
+go get github.com/loveuer/ngorm/v2
 ```
 
 # Usage
@@ -33,7 +15,7 @@ go get 10.220.10.35/tools/ngorm
 - new client
 ```go
 import (
-    "10.220.10.35/tools/ngorm/v2"
+    "github.com/loveuer/ngorm/v2"
 )
 
 client, err := ngorm.NewClient(gctx, &ngorm.Config{

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"10.220.10.35/tools/ngorm/v2"
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/loveuer/ngorm/v2"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"os/signal"
@@ -23,10 +23,10 @@ func main() {
 	logrus.SetLevel(logrus.DebugLevel)
 
 	client, err := ngorm.NewClient(gctx, &ngorm.Config{
-		Endpoints:    []string{"10.220.10.48:9669"},
-		Username:     "root",
-		Password:     "123",
-		DefaultSpace: "test_base",
+		Endpoints:    []string{"127.0.0.1:9669"},
+		Username:     "admin",
+		Password:     "password",
+		DefaultSpace: "test",
 		Logger:       nil,
 	})
 
@@ -64,7 +64,7 @@ func main() {
 
 		if err = client.GoFrom(uuid).
 			Model(&Vertex{}).
-			Over("contact", ngorm.EdgeTypeBoth).
+			Over("relation", ngorm.EdgeTypeBoth).
 			Tags("NAMES", "ADDRESS").
 			Key("v").
 			Scan(&results); err != nil {
