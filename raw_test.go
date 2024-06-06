@@ -4,8 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"log"
+	"github.com/loveuer/esgo2dump/log"
 	"testing"
 )
 
@@ -18,7 +17,7 @@ func testInit() {
 		err error
 	)
 
-	logrus.SetLevel(logrus.DebugLevel)
+	log.SetLogLevel(log.LogLevelDebug)
 
 	client, err = NewClient(context.TODO(), &Config{
 		Endpoints:    []string{"10.220.10.19:9669"},

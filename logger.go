@@ -1,39 +1,78 @@
 package ngorm
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/loveuer/esgo2dump/log"
+	"sync"
 )
 
 type logger interface {
-	Debug(msg string)
-	Info(msg string)
-	Warn(msg string)
-	Error(msg string)
-	Fatal(msg string)
+	Debug(msg string, data ...any)
+	Info(msg string, data ...any)
+	Warn(msg string, data ...any)
+	Error(msg string, data ...any)
+	Panic(msg string, data ...any)
+	Fatal(msg string, data ...any)
+}
+
+type compatLogger struct {
+	lock *sync.Mutex
+	l    logger
+}
+
+func (c *compatLogger) Debug(msg string) {
+	c.l.Debug(prefix + msg)
+}
+
+func (c *compatLogger) Info(msg string) {
+	c.l.Info(prefix + msg)
+}
+
+func (c *compatLogger) Warn(msg string) {
+	c.l.Warn(prefix + msg)
+}
+
+func (c *compatLogger) Error(msg string) {
+	c.l.Error(prefix + msg)
+}
+
+func (c *compatLogger) Panic(msg string) {
+	c.l.Panic(prefix + msg)
+}
+
+func (c *compatLogger) Fatal(msg string) {
+	c.l.Fatal(prefix + msg)
 }
 
 type defaultLogger struct{}
 
-func (defaultLogger) Debug(msg string) {
-	logrus.Debug(msg)
+func (defaultLogger) Debug(msg string, data ...any) {
+	log.Debug(prefix+msg, data...)
 }
 
-func (defaultLogger) Info(msg string) {
-	logrus.Info(msg)
+func (l defaultLogger) Info(msg string, data ...any) {
+	log.Info(prefix+msg, data...)
 }
 
-func (defaultLogger) Warn(msg string) {
-	logrus.Warn(msg)
+func (l defaultLogger) Warn(msg string, data ...any) {
+	log.Warn(prefix+msg, data...)
 }
 
-func (defaultLogger) Error(msg string) {
-	logrus.Error(msg)
+func (l defaultLogger) Error(msg string, data ...any) {
+	log.Error(prefix+msg, data...)
 }
 
-func (defaultLogger) Fatal(msg string) {
-	logrus.Fatal(msg)
+func (defaultLogger) Panic(msg string, data ...any) {
+	log.Panic(prefix+msg, data...)
 }
+
+func (defaultLogger) Fatal(msg string, data ...any) {
+	log.Fatal(prefix+msg, data...)
+}
+
+const (
+	prefix = "NGORM | "
+)
 
 var (
-	DefaultLogger = defaultLogger{}
+	clog = &compatLogger{lock: &sync.Mutex{}, l: defaultLogger{}}
 )

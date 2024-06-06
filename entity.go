@@ -1,47 +1,47 @@
 package ngorm
 
 import (
-	"fmt"
 	nebula "github.com/vesoft-inc/nebula-go/v3"
 	"strings"
+	"time"
 )
 
 type entity struct {
-	c         *Client
-	logger    logger
+	sess      *session
 	ngql      string
 	set       *nebula.ResultSet
 	err       error
 	formatted []map[string]any
 }
 
-func (e *entity) execute(retry int) {
+func (e *entity) execute() {
 
-	e.logger.Debug(fmt.Sprintf("[ngorm] [sessions: %d] execute '%s'", e.c.client.GetTotalSessionCount(), e.ngql))
+	clog.l.Debug("ngql: '%s'", e.ngql)
 
-	e.set, e.err = e.c.client.Execute(e.ngql)
+	retry := 0
+EXECUTE:
+	e.set, e.err = e.sess.client.pool.Execute(e.ngql)
 
 	if e.err != nil {
-		e.logger.Debug(fmt.Sprintf("[ngorm] execute '%s' err: %v", e.ngql, e.err))
+		clog.l.Debug("execute ngql: '%s', err: %v", e.ngql, e.err)
+		if strings.Contains(e.err.Error(), "EOF") || strings.Contains(e.err.Error(), "broken pipe") {
+		RETRY:
+			if retry < e.sess.cfg.MaxRetry {
+				retry++
+				clog.l.Warn("nebula connection EOF(broken pipe): reconnect after %d seconds...[%d/%d]", 1<<retry, retry, e.sess.cfg.MaxRetry)
 
-		if retry == 0 {
-			switch {
-			case strings.Contains(e.err.Error(), "EOF"),
-				strings.Contains(e.err.Error(), "broken pipe"):
-				e.logger.Debug("[ngorm] EOF: reconnection...")
+				time.Sleep(time.Duration(1<<retry) * time.Second)
 
-				var (
-					err error
-				)
-
-				if e.c.client, e.err = nebula.NewSessionPool(*config, cc.Logger); err != nil {
-					e.logger.Debug(fmt.Sprintf("[ngorm] renew session pool err: %v", e.err))
-					return
+				if e.sess.client.pool, e.err = nebula.NewSessionPool(*config, clog); e.err != nil {
+					e.sess.logger.Debug("reconnect err: %v", e.err)
+					goto RETRY
 				}
 
-				e.execute(retry + 1)
+				goto EXECUTE
 			}
+			// if max_retry = 0(no retry), end
 		}
+		// if err not EOF(broken pipe...), no retry, end
 	}
 }
 
@@ -55,7 +55,7 @@ func (e *entity) formatSet() {
 		var record *nebula.Record
 
 		if record, e.err = e.set.GetRowValuesByIndex(rowIndex); e.err != nil {
-			e.logger.Debug(fmt.Sprintf("[ngorm] get row: %d value err: %v", rowIndex, e.err))
+			clog.l.Debug("get row: %d value err: %v", rowIndex, e.err)
 			return
 		}
 
@@ -67,7 +67,7 @@ func (e *entity) formatSet() {
 				data any
 			)
 			if vw, e.err = record.GetValueByColName(column); e.err != nil {
-				e.logger.Debug(fmt.Sprintf("[ngorm] get row: %d column: %s err: %v", rowIndex, column, e.err))
+				clog.l.Debug("get row: %d column: %s err: %v", rowIndex, column, e.err)
 				return
 			}
 
@@ -83,12 +83,12 @@ func (e *entity) formatSet() {
 }
 
 func (e *entity) RawResult() (*nebula.ResultSet, error) {
-	e.execute(0)
+	e.execute()
 	return e.set, e.err
 }
 
 func (e *entity) Result() (any, error) {
-	e.execute(0)
+	e.execute()
 	if e.err != nil {
 		return nil, e.err
 	}

@@ -1,14 +1,13 @@
 package ngorm
 
 import (
-	"fmt"
 	"reflect"
 
 	nebula "github.com/vesoft-inc/nebula-go/v3"
 )
 
 func (e *entity) Scan(dest any) error {
-	e.execute(0)
+	e.execute()
 	if e.err != nil {
 		return e.err
 	}
@@ -47,7 +46,7 @@ func (e *entity) scan(model *Model) error {
 		var record *nebula.Record
 
 		if record, err = e.set.GetRowValuesByIndex(rowIndex); e.err != nil {
-			e.logger.Debug(fmt.Sprintf("[ngorm] get row: %d value err: %v", rowIndex, err))
+			e.sess.logger.Debug("get row: %d value err: %v", rowIndex, err)
 			return err
 		}
 
@@ -63,7 +62,7 @@ func (e *entity) scan(model *Model) error {
 			)
 
 			if vw, err = record.GetValueByColName(column); err != nil {
-				e.logger.Debug(fmt.Sprintf("[ngorm] get row: %d column: %s value err: %v", rowIndex, column, err))
+				e.sess.logger.Debug("get row: %d column: %s value err: %v", rowIndex, column, err)
 				return err
 			}
 

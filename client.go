@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
-	"strings"
-
+	"github.com/loveuer/esgo2dump/log"
 	"github.com/spf13/cast"
 	nebula "github.com/vesoft-inc/nebula-go/v3"
+	"regexp"
+	"strings"
 )
 
 type Client struct {
 	ctx    context.Context
-	client *nebula.SessionPool
+	pool   *nebula.SessionPool
 	logger logger
 }
 
@@ -26,13 +26,28 @@ type Config struct {
 }
 
 var (
-	config *nebula.SessionPoolConf
-	cc     *Config
+	config    *nebula.SessionPoolConf
+	cc        *Config
+	domainReg *regexp.Regexp
+	ipv4Reg   *regexp.Regexp
 )
+
+func init() {
+	var err error
+	domainReg, err = regexp.Compile(`^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	ipv4Reg, err = regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+}
 
 func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 	var (
-		ok             bool
+		//ok             bool
 		err            error
 		pool           *nebula.SessionPool
 		serviceAddress = make([]nebula.HostAddress, 0)
@@ -40,12 +55,11 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 	)
 
 	if cfg == nil {
-		DefaultLogger.Debug("[ngorm] nil config")
 		return nil, errors.New("config is nil")
 	}
 
-	if cfg.Logger == nil {
-		cfg.Logger = DefaultLogger
+	if cfg.Logger != nil {
+		clog.l = cfg.Logger
 	}
 
 	if ctx == nil {
@@ -55,7 +69,7 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 	for _, endpoint := range cfg.Endpoints {
 		s := strings.Split(endpoint, ":")
 		if len(s) != 2 {
-			cfg.Logger.Debug(fmt.Sprintf("[ngorm] endpoint: %s invalid", endpoint))
+			clog.l.Warn("endpoint: %s invalid", endpoint)
 			continue
 		}
 
@@ -65,15 +79,16 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 		)
 
 		if port = cast.ToInt(s[1]); port == 0 {
-			cfg.Logger.Debug(fmt.Sprintf("[ngorm] endpoint: %s invalid", endpoint))
+			clog.l.Warn("endpoint: %s invalid", endpoint)
 			continue
 		}
 
-		if ok, _ = regexp.MatchString(`^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$`, host); !ok {
-			cfg.Logger.Debug(fmt.Sprintf("[ngorm] endpoint: %s invalid", endpoint))
+		if (!ipv4Reg.MatchString(host)) && (!domainReg.MatchString(host)) {
+			clog.l.Warn("endpoint: %s invalid", endpoint)
 			continue
 		}
 
+		clog.l.Debug("add endpoint: host: %s, port: %d", host, port)
 		serviceAddress = append(serviceAddress, nebula.HostAddress{Host: host, Port: port})
 	}
 
@@ -89,12 +104,12 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 		return nil, err
 	}
 
-	if pool, err = nebula.NewSessionPool(*config, cfg.Logger); err != nil {
-		cfg.Logger.Debug(fmt.Sprintf("[ngorm] new session pool err: %v", err))
-		return nil, err
+	if pool, err = nebula.NewSessionPool(*config, clog); err != nil {
+		clog.l.Debug("new session pool err: %v", err)
+		return nil, fmt.Errorf("new session pool err: %w", err)
 	}
 
-	client.client = pool
+	client.pool = pool
 	client.logger = cfg.Logger
 	client.ctx = ctx
 
@@ -103,22 +118,40 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 	return client, nil
 }
 
+func (c *Client) Session(scfgs ...*SessCfg) *session {
+	if len(scfgs) > 0 && scfgs[0] != nil {
+		return &session{client: c, cfg: scfgs[0]}
+	}
+
+	return &session{client: c, cfg: sessionDefaultCfg}
+}
+
+// Deprecated: use Session().Raw instead
 func (c *Client) Raw(ngql string) *entity {
-	var (
-		e = &entity{c: c, ngql: ngql, logger: c.logger}
-	)
+	sess := &session{client: c, cfg: sessionDefaultCfg}
+	e := &entity{sess: sess, ngql: ngql}
 
 	return e
 }
 
+// Deprecated: use Session().Fetch instead
 func (c *Client) Fetch(ids ...string) *fetchController {
-	return &fetchController{client: c, ids: ids}
+	sess := &session{client: c, cfg: sessionDefaultCfg}
+	return &fetchController{sess: sess, ids: ids}
 }
 
+// Deprecated: use Session().GoFrom instead
 func (c *Client) GoFrom(id string) *goController {
-	return &goController{client: c, from: id}
+	sess := &session{client: c, cfg: sessionDefaultCfg}
+	return &goController{sess: sess, from: id}
 }
 
+// Deprecated: use Session().Match instead
 func (c *Client) Match(value any, name string) *matchController {
-	return &matchController{client: c, points: []drop{{Name: name, Value: value}}, edgs: make(map[string]struct{})}
+	sess := &session{client: c, cfg: sessionDefaultCfg}
+	return &matchController{
+		sess:   sess,
+		points: []drop{{Name: name, Value: value}},
+		edgs:   make(map[string]struct{}),
+	}
 }

@@ -1,7 +1,7 @@
 package ngorm
 
 func (e *entity) Count(value ...*int64) error {
-	e.execute(0)
+	e.execute()
 	if e.err != nil {
 		return e.err
 	}

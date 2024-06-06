@@ -9,8 +9,8 @@ import (
 )
 
 type fetchController struct {
-	client *Client
-
+	//client *Client
+	sess  *session
 	model any
 	ngql  string
 	key   string
@@ -78,7 +78,7 @@ func (f *fetchController) RawResult() (*nebula.ResultSet, error) {
 		return nil, err
 	}
 
-	return f.client.Raw(f.ngql).RawResult()
+	return f.sess.client.Raw(f.ngql).RawResult()
 }
 
 func (f *fetchController) Result() (any, error) {
@@ -86,7 +86,7 @@ func (f *fetchController) Result() (any, error) {
 		return nil, err
 	}
 
-	return f.client.Raw(f.ngql).Result()
+	return f.sess.client.Raw(f.ngql).Result()
 }
 
 func (f *fetchController) Scan(dest any) error {
@@ -98,7 +98,7 @@ func (f *fetchController) Scan(dest any) error {
 		return err
 	}
 
-	return f.client.Raw(f.ngql).Scan(dest)
+	return f.sess.client.Raw(f.ngql).Scan(dest)
 }
 
 // Deprecated: use Scan instead

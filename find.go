@@ -7,12 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/vesoft-inc/nebula-go/v3/nebula"
 )
 
 func (e *entity) Finds(key string, values ...any) error {
-	e.execute(0)
+	e.execute()
 	if e.err != nil {
 		return e.err
 	}
@@ -98,7 +97,7 @@ func (e *entity) scanEdge(key string, nValue *nebula.Value, rv reflect.Value, mo
 	if key != "" {
 		if _, ok := model.Fields["names"]; ok {
 			if err := json.Unmarshal(props[key].GetSVal(), rv.FieldByName(model.Fields["names"]).Addr().Interface()); err != nil {
-				logrus.Debug(fmt.Sprintf("colRow as list[as string] unmarshal to []any err: %v", err))
+				e.sess.logger.Debug("colRow as list[as string] unmarshal to []any err: %v", err)
 				return err
 			}
 		}
@@ -116,7 +115,7 @@ func (e *entity) scanNebulaValue(key string, vw *nebula.Value, rv reflect.Value,
 	} else if vw.IsSetSVal() { //string
 		if rv.Type().Kind() == reflect.Array|reflect.Slice {
 			if err := json.Unmarshal(vw.GetSVal(), rv.Addr().Interface()); err != nil {
-				e.logger.Debug(fmt.Sprintf("vw as list[as string] unmarshal to []any err: %v", err))
+				e.sess.logger.Debug("vw as list[as string] unmarshal to []any err: %v", err)
 				return err
 			}
 		} else {

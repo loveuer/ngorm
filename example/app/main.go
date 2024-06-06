@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/loveuer/esgo2dump/log"
 	"github.com/loveuer/ngorm/v2"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -20,18 +20,18 @@ func main() {
 	gctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 
-	logrus.SetLevel(logrus.DebugLevel)
+	log.SetLogLevel(log.LogLevelDebug)
 
 	client, err := ngorm.NewClient(gctx, &ngorm.Config{
-		Endpoints:    []string{"127.0.0.1:9669"},
-		Username:     "admin",
+		Endpoints:    []string{"localhost.nebula:9669"},
+		Username:     "root",
 		Password:     "password",
-		DefaultSpace: "test",
+		DefaultSpace: "test_base",
 		Logger:       nil,
 	})
 
 	if err != nil {
-		logrus.Panic("init ngorm client err:", err)
+		log.Panic("init ngorm client err: %v", err)
 	}
 
 	app := gin.Default()
@@ -44,7 +44,7 @@ func main() {
 
 		result := new(Vertex)
 
-		if err = client.Fetch(uuid).Tags("NAMES", "ADDRESS").Key("v").Scan(result); err != nil {
+		if err = client.Session().Fetch(uuid).Tags("NAMES", "ADDRESS").Key("v").Scan(result); err != nil {
 			c.JSON(500, err.Error())
 			return
 		}
@@ -78,7 +78,7 @@ func main() {
 	srv := http.Server{Handler: app, Addr: "0.0.0.0:7788"}
 
 	go func() {
-		logrus.Fatal(srv.ListenAndServe())
+		log.Fatal(srv.ListenAndServe().Error())
 	}()
 
 	go func(ctx context.Context) {

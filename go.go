@@ -16,7 +16,8 @@ const (
 )
 
 type goController struct {
-	client   *Client
+	//client   *Client
+	sess     *session
 	model    any
 	from     string
 	steps    int
@@ -131,7 +132,7 @@ func (g *goController) RawResult() (*nebula.ResultSet, error) {
 		return nil, err
 	}
 
-	return g.client.Raw(g.ngql).RawResult()
+	return g.sess.client.Raw(g.ngql).RawResult()
 }
 
 func (g *goController) Result() (any, error) {
@@ -139,7 +140,7 @@ func (g *goController) Result() (any, error) {
 		return nil, err
 	}
 
-	return g.client.Raw(g.ngql).Result()
+	return g.sess.client.Raw(g.ngql).Result()
 }
 
 func (g *goController) Scan(dest any) error {
@@ -151,7 +152,7 @@ func (g *goController) Scan(dest any) error {
 		return err
 	}
 
-	return g.client.Raw(g.ngql).Scan(dest)
+	return g.sess.client.Raw(g.ngql).Scan(dest)
 }
 
 // Deprecated: use Scan instead

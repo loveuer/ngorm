@@ -3,7 +3,6 @@ package ngorm
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	nebula "github.com/vesoft-inc/nebula-go/v3"
 	"reflect"
 	"time"
@@ -22,7 +21,7 @@ func (e *entity) scanValueWrapper(vw *nebula.ValueWrapper, column string, rv ref
 	case reflect.Bool:
 		val, err := vw.AsBool()
 		if err != nil {
-			e.logger.Debug(fmt.Sprintf("vw as bool err: %v", err))
+			e.sess.logger.Debug("vw as bool err: %v", err)
 			return err
 		}
 
@@ -32,7 +31,7 @@ func (e *entity) scanValueWrapper(vw *nebula.ValueWrapper, column string, rv ref
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		val, err := vw.AsInt()
 		if err != nil {
-			e.logger.Debug(fmt.Sprintf("vw as int err: %v", err))
+			e.sess.logger.Debug("vw as int err: %v", err)
 			return err
 		}
 
@@ -42,7 +41,7 @@ func (e *entity) scanValueWrapper(vw *nebula.ValueWrapper, column string, rv ref
 	case reflect.Float32, reflect.Float64:
 		val, err := vw.AsFloat()
 		if err != nil {
-			e.logger.Debug(fmt.Sprintf("vw as float err: %v", err))
+			e.sess.logger.Debug("vw as float err: %v", err)
 			return err
 		}
 
@@ -52,7 +51,7 @@ func (e *entity) scanValueWrapper(vw *nebula.ValueWrapper, column string, rv ref
 	case reflect.String:
 		val, err := vw.AsString()
 		if err != nil {
-			e.logger.Debug(fmt.Sprintf("vw as string err: %v", err))
+			e.sess.logger.Debug("vw as string err: %v", err)
 			return err
 		}
 
@@ -60,7 +59,7 @@ func (e *entity) scanValueWrapper(vw *nebula.ValueWrapper, column string, rv ref
 
 		return nil
 	case reflect.Interface, reflect.Map:
-		return fmt.Errorf("%w: todo: error model type detector", ErrModelTypeUnsupport)
+		return fmt.Errorf("%w: todo: error model type detector", ErrModelTypeUnsupported)
 	case reflect.Array, reflect.Slice:
 		vws, err := vw.AsList()
 		if err != nil {
@@ -75,12 +74,12 @@ func (e *entity) scanValueWrapper(vw *nebula.ValueWrapper, column string, rv ref
 				//is    = make([]any, 0)
 			)
 			if bsStr, err = vw.AsString(); err != nil {
-				e.logger.Debug(fmt.Sprintf("vw as list[as string] err: %v", err))
+				e.sess.logger.Debug("vw as list[as string] err: %v", err)
 				return err
 			}
 
 			if err = json.Unmarshal([]byte(bsStr), rv.Addr().Interface()); err != nil {
-				e.logger.Debug(fmt.Sprintf("vw as list[as string] unmarshal to []any err: %v", err))
+				e.sess.logger.Debug("vw as list[as string] unmarshal to []any err: %v", err)
 				return err
 			}
 
@@ -90,7 +89,7 @@ func (e *entity) scanValueWrapper(vw *nebula.ValueWrapper, column string, rv ref
 		_ = vws
 
 		// todo
-		return fmt.Errorf("%w: todo: model type too complex", ErrModelTypeUnsupport)
+		return fmt.Errorf("%w: todo: model type too complex", ErrModelTypeUnsupported)
 	case reflect.Struct:
 		tag := model.tags[column]
 		if tag == nil {
@@ -99,10 +98,10 @@ func (e *entity) scanValueWrapper(vw *nebula.ValueWrapper, column string, rv ref
 
 		return e.scanValueWrapper(vw, column, rv.Field(tag.Index), model)
 	case reflect.Uintptr, reflect.Complex64, reflect.Complex128, reflect.Chan, reflect.Func, reflect.Pointer, reflect.UnsafePointer:
-		return fmt.Errorf("%w: %s", ErrModelTypeUnsupport, rv.Type().Kind().String())
+		return fmt.Errorf("%w: %s", ErrModelTypeUnsupported, rv.Type().Kind().String())
 	}
 
-	return fmt.Errorf("%w: %s", ErrModelTypeUnsupport, rv.Type().Kind().String())
+	return fmt.Errorf("%w: %s", ErrModelTypeUnsupported, rv.Type().Kind().String())
 }
 
 func (e *entity) handleValueWrapper(vw *nebula.ValueWrapper) (any, error) {
@@ -140,7 +139,7 @@ func (e *entity) handleValueWrapper(vw *nebula.ValueWrapper) (any, error) {
 
 		d, err := val.GetLocalDateTimeWithTimezoneName(time.Local.String())
 		if err != nil {
-			e.logger.Debug(fmt.Sprintf("[ngorm] datetime value get local datetime err: %v", err))
+			e.sess.logger.Debug("datetime value get local datetime err: %v", err)
 			return nil, err
 		}
 
@@ -164,14 +163,14 @@ func (e *entity) handleValueWrapper(vw *nebula.ValueWrapper) (any, error) {
 		// todo
 		val, _ := vw.AsRelationship()
 		_ = val
-		logrus.Panic("impl this: handle nebula ValueWrapper[IsEdge]")
+		e.sess.logger.Panic("impl this: handle nebula ValueWrapper[IsEdge]")
 	case vw.IsEmpty():
 		return nil, nil
 	case vw.IsGeography():
 		// todo
 		val, _ := vw.AsGeography()
 		_ = val
-		logrus.Panic("impl this: handle nebula ValueWrapper[IsGeography]")
+		e.sess.logger.Panic("impl this: handle nebula ValueWrapper[IsGeography]")
 	case vw.IsList():
 		val, _ := vw.AsList()
 		list := make([]any, 0, len(val))
@@ -206,7 +205,7 @@ func (e *entity) handleValueWrapper(vw *nebula.ValueWrapper) (any, error) {
 		// todo
 		val, _ := vw.AsPath()
 		_ = val
-		logrus.Panic("impl this: handle nebula ValueWrapper[IsPath]")
+		e.sess.logger.Panic("impl this: handle nebula ValueWrapper[IsPath]")
 	case vw.IsSet():
 		val, _ := vw.AsDedupList()
 		list := make([]any, 0, len(val))
@@ -224,7 +223,7 @@ func (e *entity) handleValueWrapper(vw *nebula.ValueWrapper) (any, error) {
 		// todo
 		val, _ := vw.AsTime()
 		_ = val
-		logrus.Panic("impl this: handle nebula ValueWrapper[IsTime]")
+		e.sess.logger.Panic("impl this: handle nebula ValueWrapper[IsTime]")
 	case vw.IsVertex():
 		val, _ := vw.AsNode()
 		tags := val.GetTags()
@@ -233,7 +232,7 @@ func (e *entity) handleValueWrapper(vw *nebula.ValueWrapper) (any, error) {
 			vwm, err := val.Properties(tag)
 
 			if err != nil {
-				e.logger.Debug(fmt.Sprintf("[ngorm] get properties by tag: %s, err: %v", tag, err))
+				e.sess.logger.Debug("get properties by tag: %s, err: %v", tag, err)
 				return nil, err
 			}
 

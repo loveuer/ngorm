@@ -42,7 +42,8 @@ type matchPathController struct {
 }
 
 type matchController struct {
-	client  *Client
+	//client  *Client
+	sess    *session
 	points  []drop
 	ngql    string
 	where   string
@@ -106,8 +107,8 @@ func (m *matchController) Finds(value ...any) error {
 	m.ngql += fmt.Sprintf("return %v", strings.TrimSuffix(m.rsql, ","))
 	m.mOrder()
 	m.mLimit()
-	fmt.Println("sql:", m.ngql)
-	return m.client.Raw(m.ngql).Finds(m.key, value...)
+	//fmt.Println("sql:", m.ngql)
+	return m.sess.client.Raw(m.ngql).Finds(m.key, value...)
 }
 
 func (m *matchController) Count(value ...*int64) error {
@@ -117,8 +118,8 @@ func (m *matchController) Count(value ...*int64) error {
 	m.ctorNGQL()
 	m.mReturnSql("count")
 	m.ngql += fmt.Sprintf("return %v", strings.TrimSuffix(m.rsql, ","))
-	fmt.Println("sql:", m.ngql)
-	return m.client.Raw(m.ngql).Count(value...)
+	//fmt.Println("sql:", m.ngql)
+	return m.sess.client.Raw(m.ngql).Count(value...)
 }
 
 func (m *matchController) mReturnSql(rType string) {
