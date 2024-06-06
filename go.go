@@ -17,7 +17,7 @@ const (
 
 type goController struct {
 	//client   *Client
-	sess     *session
+	sess     *Session
 	model    any
 	from     string
 	steps    int

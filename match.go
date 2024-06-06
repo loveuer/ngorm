@@ -43,7 +43,7 @@ type matchPathController struct {
 
 type matchController struct {
 	//client  *Client
-	sess    *session
+	sess    *Session
 	points  []drop
 	ngql    string
 	where   string

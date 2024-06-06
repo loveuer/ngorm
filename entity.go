@@ -7,7 +7,7 @@ import (
 )
 
 type entity struct {
-	sess      *session
+	sess      *Session
 	ngql      string
 	set       *nebula.ResultSet
 	err       error

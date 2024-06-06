@@ -118,17 +118,17 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 	return client, nil
 }
 
-func (c *Client) Session(scfgs ...*SessCfg) *session {
+func (c *Client) Session(scfgs ...*SessCfg) *Session {
 	if len(scfgs) > 0 && scfgs[0] != nil {
-		return &session{client: c, cfg: scfgs[0]}
+		return &Session{client: c, cfg: scfgs[0]}
 	}
 
-	return &session{client: c, cfg: sessionDefaultCfg}
+	return &Session{client: c, cfg: sessionDefaultCfg}
 }
 
 // Deprecated: use Session().Raw instead
 func (c *Client) Raw(ngql string) *entity {
-	sess := &session{client: c, cfg: sessionDefaultCfg}
+	sess := &Session{client: c, cfg: sessionDefaultCfg}
 	e := &entity{sess: sess, ngql: ngql}
 
 	return e
@@ -136,19 +136,19 @@ func (c *Client) Raw(ngql string) *entity {
 
 // Deprecated: use Session().Fetch instead
 func (c *Client) Fetch(ids ...string) *fetchController {
-	sess := &session{client: c, cfg: sessionDefaultCfg}
+	sess := &Session{client: c, cfg: sessionDefaultCfg}
 	return &fetchController{sess: sess, ids: ids}
 }
 
 // Deprecated: use Session().GoFrom instead
 func (c *Client) GoFrom(id string) *goController {
-	sess := &session{client: c, cfg: sessionDefaultCfg}
+	sess := &Session{client: c, cfg: sessionDefaultCfg}
 	return &goController{sess: sess, from: id}
 }
 
 // Deprecated: use Session().Match instead
 func (c *Client) Match(value any, name string) *matchController {
-	sess := &session{client: c, cfg: sessionDefaultCfg}
+	sess := &Session{client: c, cfg: sessionDefaultCfg}
 	return &matchController{
 		sess:   sess,
 		points: []drop{{Name: name, Value: value}},

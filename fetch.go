@@ -10,7 +10,7 @@ import (
 
 type fetchController struct {
 	//client *Client
-	sess  *session
+	sess  *Session
 	model any
 	ngql  string
 	key   string

@@ -6,7 +6,7 @@ type SessCfg struct {
 	MaxRetry int
 }
 
-type session struct {
+type Session struct {
 	cfg    *SessCfg
 	client *Client
 	logger logger
@@ -20,32 +20,32 @@ var (
 	}
 )
 
-func (s *session) Debug() *session {
+func (s *Session) Debug() *Session {
 	s.cfg.Debug = true
 
 	return s
 }
 
-func (s *session) Raw(ngql string) *entity {
+func (s *Session) Raw(ngql string) *entity {
 	e := &entity{sess: s, ngql: ngql}
 	return e
 }
 
-func (s *session) Fetch(ids ...string) *fetchController {
+func (s *Session) Fetch(ids ...string) *fetchController {
 	return &fetchController{
 		sess: s,
 		ids:  ids,
 	}
 }
 
-func (s *session) GoFrom(id string) *goController {
+func (s *Session) GoFrom(id string) *goController {
 	return &goController{
 		sess: s,
 		from: id,
 	}
 }
 
-func (s *session) Match(value any, name string) *matchController {
+func (s *Session) Match(value any, name string) *matchController {
 	return &matchController{
 		sess:   s,
 		points: []drop{{Name: name, Value: value}},
