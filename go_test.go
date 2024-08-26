@@ -45,3 +45,18 @@ func TestGo(t *testing.T) {
 		t.Logf("idx=%d result:%s\n", idx, string(bs))
 	}
 }
+func TestGo2(t *testing.T) {
+	type Res struct {
+		Target string `nebula:"VertexID"`
+	}
+
+	result := make([]*Res, 0)
+
+	if err := client.Session().GoFrom("08e").Steps(1).Over("contact").Scan(&result); err != nil {
+		t.Fatal(err.Error())
+	}
+
+	for idx := range result {
+		t.Logf("target => %s\n", result[idx].Target)
+	}
+}

@@ -111,14 +111,17 @@ func (g *goController) ctorNGQL() error {
 		fs = append(fs, f)
 	}
 
-	g.ngql = fmt.Sprintf("GO %d STEPS FROM '%s' OVER %s%s YIELD %s._dst as VertexID, %s ",
+	g.ngql = fmt.Sprintf("GO %d STEPS FROM '%s' OVER %s%s YIELD %s._dst as VertexID",
 		g.steps,
 		g.from,
 		g.edge,
 		g.edgeType,
 		g.edge,
-		strings.Join(fs, ", "),
 	)
+
+	if len(fs) > 0 {
+		g.ngql = g.ngql + ", " + strings.Join(fs, ", ")
+	}
 
 	if g.limit > 0 || g.offset > 0 {
 		g.ngql = fmt.Sprintf("%s | limit %d, %d", g.ngql, g.offset, g.limit)
