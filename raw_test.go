@@ -4,18 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/loveuer/esgo2dump/log"
 	"testing"
+
+	"github.com/loveuer/nf/nft/log"
 )
 
-var (
-	client *Client
-)
+var client *Client
 
 func testInit() {
-	var (
-		err error
-	)
+	var err error
 
 	log.SetLogLevel(log.LogLevelDebug)
 
@@ -26,7 +23,6 @@ func testInit() {
 		DefaultSpace: "test_base",
 		Logger:       nil,
 	})
-
 	if err != nil {
 		log.Fatal("new client err:", err)
 	}
@@ -39,7 +35,7 @@ func TestScanVertex2Any(t *testing.T) {
 		a    any
 		err  error
 		ngql = "fetch prop on NAMES,ADDRESS '000164', '00031N6' yield NAMES.v as names, ADDRESS.v as address"
-		//ngql = "fetch prop on * '000164', '00031N6' yield vertex as v"
+		// ngql = "fetch prop on * '000164', '00031N6' yield vertex as v"
 	)
 
 	if err = client.Raw(ngql).Scan(&a); err != nil {
@@ -61,7 +57,7 @@ func TestScanVertex2Map(t *testing.T) {
 		m    = make(map[string]any)
 		err  error
 		ngql = "fetch prop on NAMES,ADDRESS '000164', '00031N6' yield NAMES.v as names, ADDRESS.v as address"
-		//ngql = "fetch prop on * '000164', '00031N6' yield vertex as v"
+		// ngql = "fetch prop on * '000164', '00031N6' yield vertex as v"
 	)
 
 	if err = client.Raw(ngql).Scan(&m); err != nil {
@@ -83,7 +79,7 @@ func TestScanVertex2MapSlice(t *testing.T) {
 		ms   = make([]map[string]any, 0)
 		err  error
 		ngql = "fetch prop on NAMES,ADDRESS '000164', '00031N6' yield NAMES.v as names, ADDRESS.v as address"
-		//ngql = "fetch prop on * '000164', '00031N6' yield vertex as v"
+		// ngql = "fetch prop on * '000164', '00031N6' yield vertex as v"
 	)
 
 	if err = client.Raw(ngql).Scan(&ms); err != nil {
@@ -110,8 +106,8 @@ func TestScanVertex2Struct(t *testing.T) {
 	var (
 		v   = new(Base)
 		err error
-		//ngql = "fetch prop on NAMES,ADDRESS '000164', '00031N6' yield NAMES.v as names, ADDRESS.v as address"
-		//ngql = "fetch prop on * '000164', '00031N6' yield vertex as v"
+		// ngql = "fetch prop on NAMES,ADDRESS '000164', '00031N6' yield NAMES.v as names, ADDRESS.v as address"
+		// ngql = "fetch prop on * '000164', '00031N6' yield vertex as v"
 		ngql = "go 1 steps from 'H8ko' over contact yield $$.NAMES.v as names,$$.ADDRESS.v as address,  id($$) as id | limit 1"
 	)
 
@@ -134,8 +130,8 @@ func TestScanVertex2StructSlice(t *testing.T) {
 		vsptr = make([]*Base, 0)
 		vs    = make([]Base, 0)
 		err   error
-		//ngql = "fetch prop on NAMES,ADDRESS '000164', '00031N6' yield NAMES.v as names, ADDRESS.v as address"
-		//ngql = "fetch prop on * '000164', '00031N6' yield vertex as v"
+		// ngql = "fetch prop on NAMES,ADDRESS '000164', '00031N6' yield NAMES.v as names, ADDRESS.v as address"
+		// ngql = "fetch prop on * '000164', '00031N6' yield vertex as v"
 		ngql = "go 1 steps from 'H8ko' over contact yield $$.NAMES.v as names,$$.ADDRESS.v as address,  id($$) as id | limit 3"
 	)
 

@@ -1,8 +1,9 @@
 package ngorm
 
 import (
-	"github.com/loveuer/esgo2dump/log"
 	"sync"
+
+	"github.com/loveuer/nf/nft/log"
 )
 
 type logger interface {
@@ -73,6 +74,4 @@ const (
 	prefix = "NGORM | "
 )
 
-var (
-	clog = &compatLogger{lock: &sync.Mutex{}, l: defaultLogger{}}
-)
+var clog = &compatLogger{lock: &sync.Mutex{}, l: defaultLogger{}}
