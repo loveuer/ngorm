@@ -38,6 +38,13 @@ func (s *Session) Fetch(ids ...string) *fetchController {
 	}
 }
 
+func (s *Session) FetchPath() *fetchPathController {
+	return &fetchPathController{
+		sess:  s,
+		paths: make([]*_path, 0),
+	}
+}
+
 func (s *Session) GoFrom(id string) *goController {
 	return &goController{
 		sess: s,

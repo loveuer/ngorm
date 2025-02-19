@@ -53,6 +53,27 @@ if err := client.Fetch(uuid).
 }
 ```
 
+- fetch path
+```go
+type Result struct {
+    Value []string `nebula:"value" json:"value"`
+}
+
+var result = make([]*Result, 0)
+
+if err := client.Session().FetchPath().
+    Path("src_v1", "dst_v1").
+    Path("srv_v2", "dst_v2").
+    Edge("some_edge").
+    Yield("properties(edge)", "value").Scan(&result); err != nil {
+    panic(err)
+}
+
+for idx, item := range result {
+    fmt.Printf("%d: %+v\n", idx, item.Value)
+}
+```
+
 - go
 ```go
 type Result struct {

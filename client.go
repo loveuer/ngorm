@@ -141,6 +141,12 @@ func (c *Client) Fetch(ids ...string) *fetchController {
 	return &fetchController{sess: sess, ids: ids}
 }
 
+// Deprecated: use Session().FetchPath instead
+func (c *Client) FetchPath() *fetchPathController {
+	sess := &Session{client: c, cfg: sessionDefaultCfg}
+	return &fetchPathController{sess: sess, paths: make([]*_path, 0)}
+}
+
 // Deprecated: use Session().GoFrom instead
 func (c *Client) GoFrom(id string) *goController {
 	sess := &Session{client: c, cfg: sessionDefaultCfg}
