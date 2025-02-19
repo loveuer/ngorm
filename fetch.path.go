@@ -89,6 +89,10 @@ func (f *fetchPathController) ctorNGQL() error {
 		return fmt.Errorf("at least one path required")
 	}
 
+	if len(f.yield) == 0 {
+		return fmt.Errorf("at least one yield required")
+	}
+
 	f.ngql = fmt.Sprintf("FETCH PROP ON %s %s YIELD %s",
 		f.edge,
 		strings.Join(paths, ", "),
